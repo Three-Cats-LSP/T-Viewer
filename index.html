@@ -72,12 +72,12 @@
     --orange:    #ff5500;
     --red:       #FF3131;
     --gold:      #996600;
-    /* syntax — darker for sunlight readability */
-    --syn-h:   var(--accent);          /* headers     → blue */
-    --syn-s:   var(--dim);             /* separators  → grey */
-    --syn-d:   var(--gold);            /* data/numbers→ dark gold */
-    --syn-w:   var(--orange);          /* warnings    → orange-red */
-    --syn-l:   var(--accent2);         /* labels      → dark teal */
+    /* syntax — light mode: most things black, only separators stay grey */
+    --syn-h:   var(--accent);          /* section headers → blue */
+    --syn-s:   var(--dim);             /* separators      → grey */
+    --syn-d:   #1a1a1a;               /* data rows       → BLACK */
+    --syn-w:   var(--orange);          /* warnings        → orange-red */
+    --syn-l:   #1a1a1a;               /* key:value lines → BLACK */
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -596,6 +596,8 @@ function highlight(text) {
     if (/^[A-Z][A-Z ]{3,}$/.test(t))            return `<span class="h">${e}</span>`;
     // warning lines: explicit warning keywords at start of line
     if (/^(WARN|WARNING|CAUTION|ALERT|DANGER|ERROR)[:! ]/i.test(t)) return `<span class="w">${e}</span>`;
+    // key : value parameter lines (Algorithm, Depth, Deco Gas, etc.)
+    if (/^[A-Za-z][\w\s]{1,22}\s*:\s+\S/.test(t))                  return `<span class="l">${e}</span>`;
     // everything else — data rows, gas switch lines, deco table — plain text
     return e;
   }).join('\n');
