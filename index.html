@@ -75,9 +75,9 @@
     /* syntax — light mode: most things black, only separators stay grey */
     --syn-h:   var(--accent);          /* section headers → blue */
     --syn-s:   var(--dim);             /* separators      → grey */
-    --syn-d:   #1a1a1a;               /* data rows       → BLACK */
+    --syn-d:   #1a1a1a;               /* data/numbers    → BLACK (amber unreadable on white) */
     --syn-w:   var(--orange);          /* warnings        → orange-red */
-    --syn-l:   #1a1a1a;               /* key:value lines → BLACK */
+    --syn-l:   var(--accent2);         /* key:value lines → dark teal (unchanged) */
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
