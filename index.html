@@ -871,32 +871,74 @@ function buildPickers(theme) {
   const defaults = COLOR_DEFAULTS[theme];
   Object.entries(defaults).forEach(([varName, defaultVal]) => {
     const current = saved[varName] || defaultVal;
-    // Convert rgba/named to hex for the color input (best-effort)
-    const hexVal = rgbaToHex(current);
+    const hexVal  = rgbaToHex(current);
+    const swatchId = 'swatch-' + theme + '-' + varName.replace(/[^a-z0-9]/g,'_');
 
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;';
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;';
 
     row.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px;flex:1;">
-        <div style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-hi);background:${hexVal};flex-shrink:0;" id="swatch-${theme}-${varName.replace(/[-]/g,'_')}"></div>
-        <div>
-          <div style="font-size:11px;color:var(--text);font-weight:600;">${COLOR_LABELS[varName]}</div>
-          <div style="font-size:9px;color:var(--muted);letter-spacing:.06em;">${varName}</div>
-        </div>
+      <div id="${swatchId}"
+        style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-hi);background:${hexVal};flex-shrink:0;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;color:var(--text);font-weight:600;white-space:nowrap;">${COLOR_LABELS[varName]}</div>
+        <div style="font-size:9px;color:var(--muted);letter-spacing:.06em;">${varName}</div>
       </div>
+      <input type="text" maxlength="7" value="${hexVal}"
+        style="width:76px;padding:5px 7px;border:1px solid var(--border-hi);border-radius:6px;
+               background:var(--card2);color:var(--text);font-family:'JetBrains Mono',monospace;
+               font-size:12px;letter-spacing:.04em;text-align:center;outline:none;flex-shrink:0;"
+        placeholder="#rrggbb" spellcheck="false" autocomplete="off">
       <input type="color" value="${hexVal}"
-        style="width:38px;height:32px;border:1px solid var(--border-hi);border-radius:6px;background:transparent;cursor:pointer;padding:2px;"
-        data-theme="${theme}" data-var="${varName}">
+        style="width:34px;height:34px;border:1px solid var(--border-hi);border-radius:6px;
+               background:transparent;cursor:pointer;padding:2px;flex-shrink:0;">
     `;
 
-    const picker = row.querySelector('input[type=color]');
-    const swatch = row.querySelector('[id^="swatch-"]');
+    const swatch  = row.querySelector('#' + swatchId);
+    const picker  = row.querySelector('input[type=color]');
+    const hexInput = row.querySelector('input[type=text]');
 
+    // colour picker → update swatch + text input + apply
     picker.addEventListener('input', () => {
-      swatch.style.background = picker.value;
-      setColor(theme, varName, picker.value);
+      const v = picker.value;
+      swatch.style.background = v;
+      hexInput.value = v;
+      hexInput.style.borderColor = 'var(--border-hi)';
+      setColor(theme, varName, v);
     });
+
+    // text input → validate → update swatch + picker + apply
+    function applyHexInput() {
+      let v = hexInput.value.trim();
+      if (!v.startsWith('#')) v = '#' + v;
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+        hexInput.value = v.toLowerCase();
+        hexInput.style.borderColor = 'var(--border-hi)';
+        swatch.style.background = v;
+        picker.value = v;
+        setColor(theme, varName, v);
+      } else if (/^#[0-9a-fA-F]{3}$/.test(v)) {
+        // expand shorthand
+        const full = '#' + v[1]+v[1]+v[2]+v[2]+v[3]+v[3];
+        hexInput.value = full;
+        hexInput.style.borderColor = 'var(--border-hi)';
+        swatch.style.background = full;
+        picker.value = full;
+        setColor(theme, varName, full);
+      } else {
+        // invalid — red border, don't apply
+        hexInput.style.borderColor = '#ff4757';
+      }
+    }
+
+    hexInput.addEventListener('input', () => {
+      // live preview as user types if length looks complete
+      const v = hexInput.value.trim().replace(/^#?/, '#');
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) applyHexInput();
+      else hexInput.style.borderColor = hexInput.value.length > 1 ? '#ff8c69' : 'var(--border-hi)';
+    });
+    hexInput.addEventListener('blur',    applyHexInput);
+    hexInput.addEventListener('keydown', e => { if (e.key === 'Enter') { applyHexInput(); hexInput.blur(); } });
 
     container.appendChild(row);
   });
