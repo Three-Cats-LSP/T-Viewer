@@ -328,13 +328,8 @@
 
 <!-- TOP BAR -->
 <div id="topbar">
-  <span id="logo">T-VIEWER</span>
-  <span id="filename">no file</span>
   <button class="btn" id="btn-open" title="Open file">
     <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
-  </button>
-  <button class="btn hidden" id="btn-share" title="Share">
-    <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
   </button>
   <button class="btn hidden" id="btn-copy" title="Copy all">
     <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -345,15 +340,19 @@
   <button class="btn hidden" id="btn-save" title="Save file" style="color:var(--accent);">
     <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
   </button>
-  <!-- Info / Ref toggle -->
+  <button class="btn hidden" id="btn-share" title="Share">
+    <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+  </button>
   <button class="btn" id="btn-ref" title="About / Reference" style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;">?</button>
-  <!-- Day/Night toggle -->
+  <!-- spacer pushes theme to right edge -->
+  <div style="flex:1;"></div>
   <button class="btn" id="btn-theme" title="Day / Night" style="font-size:16px;">
     <span id="theme-icon">🌙</span>
   </button>
 </div>
 
-<!-- CONTENT -->
+  <!-- hidden filename tracker -->
+  <span id="filename" style="display:none;"></span>
 <div id="scroll">
   <div id="content">
     <div id="empty">
@@ -417,18 +416,18 @@
 
     <!-- tab bar -->
     <div style="display:flex;gap:6px;margin-bottom:20px;">
-      <button id="tab-about-btn" onclick="switchTab('about')"
-        style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#000;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;cursor:pointer;">
-        ABOUT
-      </button>
       <button id="tab-settings-btn" onclick="switchTab('settings')"
-        style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border-hi);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;cursor:pointer;">
+        style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#000;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;cursor:pointer;">
         COLORS
+      </button>
+      <button id="tab-about-btn" onclick="switchTab('about')"
+        style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border-hi);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;cursor:pointer;">
+        ABOUT
       </button>
     </div>
 
     <!-- ── ABOUT TAB ── -->
-    <div id="tab-about">
+    <div id="tab-about" style="display:none;">
 
     <!-- About -->
     <div style="margin-bottom:20px;">
@@ -522,7 +521,7 @@
     </div><!-- /tab-about -->
 
     <!-- ── SETTINGS TAB ── -->
-    <div id="tab-settings" style="display:none;">
+    <div id="tab-settings">
 
       <!-- font selector -->
       <div style="margin-bottom:18px;">
@@ -618,8 +617,9 @@ btnTheme.addEventListener('click', () => {
 
 // ── Reference modal ───────────────────────────────────────
 btnRef.addEventListener('click', () => {
-  document.getElementById('refModal').style.display = 'block';
+  document.getElementById('refModal').style.display = 'flex';
   document.getElementById('refModal').scrollTop = 0;
+  switchTab('settings');
 });
 document.getElementById('refModal').addEventListener('click', function(e) {
   if (e.target === this) this.style.display = 'none';
