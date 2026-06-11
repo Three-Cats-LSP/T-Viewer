@@ -189,14 +189,22 @@
   .w { color: var(--syn-w); }
   .l { color: var(--syn-l); }
 
-  /* ── LIGHT THEME: force readable dark text on white ── */
-  body.light-theme #content { color: #000000 !important; }
+  /* ── LIGHT THEME: hardcoded dark colors — no var() ── */
+  body.light-theme,
+  body.light-theme * { color: #1a1a1a; }
+  body.light-theme #content,
   body.light-theme #content span { color: #000000 !important; }
   body.light-theme #content .h { color: #004488 !important; font-weight: bold; }
   body.light-theme #content .s { color: #777777 !important; }
   body.light-theme #content .d { color: #7a4f00 !important; }
   body.light-theme #content .w { color: #cc3300 !important; }
   body.light-theme #content .l { color: #005544 !important; }
+  /* keep UI elements using their accent colors */
+  body.light-theme #logo { color: #0055aa !important; }
+  body.light-theme .btn { color: #1a1a1a !important; }
+  body.light-theme #btn-theme { color: #0055aa !important; border-color: #0055aa !important; }
+  body.light-theme #filename { color: #555555 !important; }
+  body.light-theme #zoom-label { color: #555555 !important; }
 
   /* ── EMPTY STATE ── */
   #empty {
