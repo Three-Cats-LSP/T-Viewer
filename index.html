@@ -159,7 +159,7 @@
   #scroll {
     position: fixed;
     top: calc(env(safe-area-inset-top, 0px) + var(--bar));
-    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--bar));
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
     left: 0; right: 0;
     overflow-y: auto;
     overflow-x: auto;
@@ -234,40 +234,40 @@
     position: fixed;
     bottom: env(safe-area-inset-bottom, 0);
     left: 0; right: 0;
-    height: var(--bar);
+    height: 28px;
     background: var(--surface);
     border-top: 1px solid var(--rim);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 6px;
     z-index: 100;
     transition: background .2s, border-color .2s;
   }
 
   #zoom-label {
-    font-size: 12px;
+    font-size: 10px;
     color: var(--muted);
-    width: 40px;
+    width: 30px;
     text-align: center;
   }
 
   input[type=range] {
     -webkit-appearance: none; appearance: none;
-    width: 110px; height: 4px;
+    width: 90px; height: 3px;
     border-radius: 2px;
     background: var(--rim);
     outline: none;
   }
   input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 20px; height: 20px;
+    width: 13px; height: 13px;
     border-radius: 50%;
     background: var(--accent);
     cursor: pointer;
   }
   input[type=range]::-moz-range-thumb {
-    width: 20px; height: 20px;
+    width: 13px; height: 13px;
     border-radius: 50%;
     background: var(--accent);
     border: none; cursor: pointer;
@@ -276,7 +276,7 @@
   /* ── TOAST ── */
   #toast {
     position: fixed;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--bar) + 12px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 28px + 10px);
     left: 50%;
     transform: translateX(-50%) translateY(16px);
     background: var(--accent2);
@@ -368,11 +368,11 @@
 
 <!-- BOTTOM BAR -->
 <div id="bottombar">
-  <button class="btn" id="btn-sm" title="Smaller">
+  <button class="btn" id="btn-sm" title="Smaller" style="width:24px;height:24px;border-radius:6px;">
     <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
   </button>
   <input type="range" id="zoom" min="10" max="32" value="15" step="1">
-  <button class="btn" id="btn-lg" title="Bigger">
+  <button class="btn" id="btn-lg" title="Bigger" style="width:24px;height:24px;border-radius:6px;">
     <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
   </button>
   <span id="zoom-label">15px</span>
