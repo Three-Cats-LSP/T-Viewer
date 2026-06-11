@@ -38,6 +38,9 @@ jobs:
         run: |
           mkdir -p www
           cp index.html www/
+          cp manifest.json www/
+          cp icon-192.png www/
+          cp icon-512.png www/
 
       - name: Capacitor sync
         run: npx cap sync android

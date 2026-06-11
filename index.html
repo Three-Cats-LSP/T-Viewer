@@ -4,8 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="T-Viewer">
 <meta name="theme-color" content="#0a1628">
 <title>T-Viewer</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 
 <!-- Capacitor runtime — loaded by the WebView; no-op stub when running in browser -->
 <script>
@@ -230,11 +235,38 @@
 
   /* hidden web file input (fallback / dev) */
   #filein { display: none; }
+
+  /* ── DRAG-OVER OVERLAY ── */
+  #dropzone {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(10, 22, 40, 0.88);
+    border: 3px dashed var(--accent);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    color: var(--accent);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    pointer-events: none;
+  }
+  #dropzone.active { display: flex; }
+  #dropzone svg { width: 56px; height: 56px; stroke: var(--accent); fill: none; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
 </style>
 </head>
 <body>
 
 <input type="file" id="filein" accept=".txt,.log,.plan,.div,text/*">
+
+<!-- DRAG-AND-DROP OVERLAY -->
+<div id="dropzone">
+  <svg viewBox="0 0 64 64"><path d="M12 8h28l12 12v36H12z"/><polyline points="40,8 40,20 52,20"/><line x1="32" y1="22" x2="32" y2="44"/><polyline points="22,34 32,22 42,34"/></svg>
+  DROP FILE HERE
+</div>
 
 <!-- TOP BAR -->
 <div id="topbar">
@@ -266,9 +298,9 @@
         <line x1="20" y1="48" x2="36" y2="48"/>
       </svg>
       <h2>T-VIEWER</h2>
-      <p>Open a text file — or share one from LSP D-Planner directly into this app.</p>
+      <p id="empty-hint">Open a text file — or share one from LSP D-Planner directly into this app.</p>
       <button id="open-big">OPEN FILE</button>
-      <small>UTF-8 · Unicode · plain text</small>
+      <small id="empty-sub">UTF-8 · Unicode · plain text</small>
     </div>
   </div>
 </div>
@@ -479,6 +511,45 @@ function copyAll() {
     });
 }
 btnCopy.addEventListener('click', copyAll);
+
+// ── Drag and drop (web / desktop) ──────────────────────────
+const dropzone = document.getElementById('dropzone');
+let dragCounter = 0;
+
+document.addEventListener('dragenter', e => {
+  if (!e.dataTransfer.types.includes('Files')) return;
+  dragCounter++;
+  dropzone.classList.add('active');
+});
+document.addEventListener('dragleave', () => {
+  dragCounter--;
+  if (dragCounter <= 0) { dragCounter = 0; dropzone.classList.remove('active'); }
+});
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  dragCounter = 0;
+  dropzone.classList.remove('active');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  currentPath = file.name;
+  const reader = new FileReader();
+  reader.onload = ev => loadText(ev.target.result, file.name);
+  reader.onerror = () => toast('Could not read file ✗');
+  reader.readAsText(file, 'UTF-8');
+});
+
+// ── Adjust empty-state hint for platform ─────────────────────
+(function() {
+  const isNative = window.Capacitor?.isNativePlatform?.();
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  if (!isNative && !isMobile) {
+    document.getElementById('empty-hint').textContent =
+      'Open a text file or drag and drop it here.';
+    document.getElementById('empty-sub').textContent =
+      'UTF-8 · Unicode · plain text · Ctrl+O to open';
+  }
+})();
 
 // ── Keyboard (desktop dev) ────────────────────────────────
 document.addEventListener('keydown', e => {
