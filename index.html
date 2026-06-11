@@ -573,6 +573,10 @@ let toastTimer;
 // ── Theme ─────────────────────────────────────────────────
 function applyTheme(light) {
   document.body.classList.toggle('light-theme', light);
+  // clear any inline colour overrides from the previous theme
+  Object.keys(COLOR_DEFAULTS.dark).concat(Object.keys(COLOR_DEFAULTS.light))
+    .filter((v,i,a) => a.indexOf(v) === i)
+    .forEach(v => document.body.style.removeProperty(v));
   themeIcon.textContent = light ? '☀️' : '🌙';
   themeMeta.content = light ? '#f8f9fa' : '#030c18';
   try { localStorage.setItem('tv_theme', light ? 'light' : 'dark'); } catch {}
@@ -883,7 +887,7 @@ function loadSavedColors() {
 
 // Apply a colour set for a theme to the DOM
 function applyColorSet(theme, colors) {
-  const root = document.documentElement;
+  const root = document.body;
   const defaults = COLOR_DEFAULTS[theme];
   Object.keys(defaults).forEach(varName => {
     const val = colors[varName] || defaults[varName];
@@ -912,7 +916,7 @@ function setColor(theme, varName, value) {
   } catch {}
   // Apply live only if this theme is active
   const active = isLightTheme ? 'light' : 'dark';
-  if (theme === active) document.documentElement.style.setProperty(varName, value);
+  if (theme === active) document.body.style.setProperty(varName, value);
 }
 
 // Reset theme colours to defaults
@@ -921,7 +925,7 @@ function resetColors(theme) {
   const defaults = COLOR_DEFAULTS[theme];
   const active = isLightTheme ? 'light' : 'dark';
   if (theme === active) {
-    Object.entries(defaults).forEach(([k,v]) => document.documentElement.style.setProperty(k, v));
+    Object.entries(defaults).forEach(([k,v]) => document.body.style.setProperty(k, v));
   }
   buildPickers(theme); // rebuild to show default values
 }
