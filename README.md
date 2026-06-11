@@ -8,7 +8,7 @@ Lightweight text file viewer for Android — companion app to [LSP D-Planner](ht
 
 ## Android App
 
-📲 **[Download T-Viewer.apk](https://github.com/Three-Cats-LSP/T-Viewer/raw/main/Android%20Apk/T-Viewer.apk)**
+📲 **[Download APK](https://three-cats-lsp.github.io/T-Viewer/download.html)**
 
 **Installation:**
 1. Open the download link above in Chrome on your Android device
