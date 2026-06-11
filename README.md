@@ -1,40 +1,44 @@
 # T-Viewer
 
-Lightweight Unicode text file viewer for Android — companion app to [LSP D-Planner](https://github.com/Three-Cats-LSP/LSP_D-planner).
+Lightweight text file viewer for Android — companion app to [LSP D-Planner](https://github.com/Three-Cats-LSP/LSP_D-planner).
 
-## Download
+🌐 **Web Version**: https://three-cats-lsp.github.io/T-Viewer/
 
-**[⬇ Download T-Viewer.apk](https://github.com/Three-Cats-LSP/T-Viewer/raw/main/Android%20Apk/T-Viewer.apk)**
+---
 
-> Sideload only — not on Google Play. Enable *Install unknown apps* in Android settings before installing.
+## Android App
 
-## Web Version
+📲 **[Download T-Viewer.apk](https://github.com/Three-Cats-LSP/T-Viewer/raw/main/Android%20Apk/T-Viewer.apk)**
 
-**[🌐 Open in Browser](https://three-cats-lsp.github.io/T-Viewer/)**
+**Installation:**
+1. Open the download link above in Chrome on your Android device
+2. Tap **Download** when prompted
+3. Go to *Settings → Apps → Special app access → Install unknown apps → Chrome* → enable
+4. Open the downloaded APK and tap **Install**
 
-Works on desktop and mobile browsers. Drag & drop a file or tap **OPEN FILE**.
-Can also be installed as a PWA (Add to Home Screen on iOS/Android, or install from Chrome on desktop).
+---
+
+## Overview
+
+T-Viewer opens text files exported from LSP D-Planner — deco logs, dive plans, slates — directly on your phone. Files can be opened from the Files app, shared from LSP D-Planner via the Android share sheet, or dragged and dropped in the browser version.
+
+---
 
 ## Features
 
 - Open `.txt` / `.log` / `.plan` files via native Android file picker
-- Accept files shared directly from LSP D-Planner via Android **Open with / Share**
-- Drag & drop on desktop browser
-- Full UTF-8 / Unicode support
+- Receive files shared from LSP D-Planner (or any app) via Android **Open with / Share**
+- Drag & drop in browser version (desktop)
+- Dive-plan syntax highlighting — headers, depths, warnings, labels
 - Font size zoom: slider, `+`/`−` buttons, pinch-to-zoom
-- Zoom preference saved between sessions
+- Zoom saved between sessions
 - Share text via Android native share sheet
 - Copy full text to clipboard
-- Dive-plan syntax highlighting (headers, depths, warnings, labels)
+- Keyboard shortcuts: `Ctrl+O` open, `Ctrl+±` zoom
 - PWA installable — works offline
 - Zero external dependencies — single `index.html`
 
-## Install (Android)
-
-1. Open the **Download** link above in Chrome on your Android device
-2. Tap **Download** when prompted
-3. Go to *Settings → Apps → Special app access → Install unknown apps → Chrome* → enable
-4. Open the downloaded APK and tap **Install**
+---
 
 ## Stack
 
@@ -46,6 +50,8 @@ Can also be installed as a PWA (Add to Home Screen on iOS/Android, or install fr
 | `@capacitor/filesystem` | 6.0.1 |
 | `@capacitor/share` | 6.0.4 |
 
+---
+
 ## Build locally
 
 ```bash
@@ -54,5 +60,20 @@ npx cap sync android
 npx cap open android   # opens Android Studio → Build → Generate APK
 ```
 
+APK is built automatically by GitHub Actions on every push to `main` and committed to `Android Apk/T-Viewer.apk`.
+
 ---
+
+## Repository Structure
+
+| Path | Purpose |
+|------|---------|
+| `index.html` | Entire app — single self-contained file |
+| `manifest.json` | PWA manifest for browser install |
+| `android/` | Capacitor Android project |
+| `Android Apk/` | Latest built APK (auto-updated by CI) |
+| `App Icon/` | Icon source PNG |
+
+---
+
 *Three Cats LSP · [@threecats_lsp](https://www.instagram.com/threecats_lsp)*
