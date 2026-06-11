@@ -588,12 +588,15 @@ function toast(msg, ms = 2200) {
 // ── Syntax highlight ──────────────────────────────────────
 function highlight(text) {
   return text.split('\n').map(line => {
+    const t = line.trim();
     const e = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    if (/^[\s=\-─═*·.]{3,}$/.test(line.trim()))                   return `<span class="s">${e}</span>`;
-    if (/^[A-Z][A-Z ]{3,}$/.test(line.trim()))                        return `<span class="h">${e}</span>`;
-    if (/\b\d+(\.\d+)?\s*(m|ft|bar|ata|psi|min|sec)\b/i.test(line)) return `<span class="d">${e}</span>`;
-    if (/\b(warn|caution|alert|danger|deco|mandatory|stop)\b/i.test(line)) return `<span class="w">${e}</span>`;
-    if (/^[\w\s\/\(\)]{2,25}:\s+\S/.test(line))                    return `<span class="l">${e}</span>`;
+    // separator lines: only dashes, equals, dots, etc.
+    if (/^[\s=\-─═*·.]{3,}$/.test(t))          return `<span class="s">${e}</span>`;
+    // section headers: ONLY pure all-caps words, no digits
+    if (/^[A-Z][A-Z ]{3,}$/.test(t))            return `<span class="h">${e}</span>`;
+    // warning lines: explicit warning keywords at start of line
+    if (/^(WARN|WARNING|CAUTION|ALERT|DANGER|ERROR)[:! ]/i.test(t)) return `<span class="w">${e}</span>`;
+    // everything else — data rows, gas switch lines, deco table — plain text
     return e;
   }).join('\n');
 }
