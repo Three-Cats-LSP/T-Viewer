@@ -394,6 +394,21 @@
       <button onclick="document.getElementById('refModal').style.display='none'" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 14px;cursor:pointer;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;">✕ Close</button>
     </div>
 
+    <!-- tab bar -->
+    <div style="display:flex;gap:6px;margin-bottom:20px;">
+      <button id="tab-about-btn" onclick="switchTab('about')"
+        style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#000;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;cursor:pointer;">
+        ABOUT
+      </button>
+      <button id="tab-settings-btn" onclick="switchTab('settings')"
+        style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border-hi);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;cursor:pointer;">
+        COLORS
+      </button>
+    </div>
+
+    <!-- ── ABOUT TAB ── -->
+    <div id="tab-about">
+
     <!-- About -->
     <div style="margin-bottom:20px;">
       <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tip);margin-bottom:10px;">About T-Viewer</div>
@@ -483,6 +498,45 @@
     </div>
 
     <p style="color:var(--muted);font-size:10px;text-align:center;letter-spacing:1px;opacity:0.6;margin-top:4px;">Three Cats LSP Diving Team</p>
+    </div><!-- /tab-about -->
+
+    <!-- ── SETTINGS TAB ── -->
+    <div id="tab-settings" style="display:none;">
+
+      <!-- theme sub-tabs -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;">
+        <button id="stab-dark-btn" onclick="switchSettingsTheme('dark')"
+          style="flex:1;padding:7px;border-radius:7px;border:1px solid var(--accent);background:var(--accent);color:#000;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;">
+          🌙 DARK
+        </button>
+        <button id="stab-light-btn" onclick="switchSettingsTheme('light')"
+          style="flex:1;padding:7px;border-radius:7px;border:1px solid var(--border-hi);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;">
+          ☀️ LIGHT
+        </button>
+      </div>
+
+      <!-- dark colours panel -->
+      <div id="spanel-dark">
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tip);margin-bottom:12px;">Dark Theme Colours</div>
+        <div id="pickers-dark" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <button onclick="resetColors('dark')"
+          style="margin-top:14px;width:100%;padding:9px;border-radius:8px;border:1px solid var(--border-hi);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;letter-spacing:.06em;">
+          ↺ Reset Dark to Defaults
+        </button>
+      </div>
+
+      <!-- light colours panel -->
+      <div id="spanel-light" style="display:none;">
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tip);margin-bottom:12px;">Light Theme Colours</div>
+        <div id="pickers-light" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <button onclick="resetColors('light')"
+          style="margin-top:14px;width:100%;padding:9px;border-radius:8px;border:1px solid var(--border-hi);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;letter-spacing:.06em;">
+          ↺ Reset Light to Defaults
+        </button>
+      </div>
+
+    </div><!-- /tab-settings -->
+
   </div>
 </div>
 
@@ -716,6 +770,204 @@ document.addEventListener('drop', e => {
       'UTF-8 · Unicode · plain text · Ctrl+O to open';
   }
 })();
+
+// ── Colour Settings ───────────────────────────────────────
+
+// Default colours per theme — mirrors the CSS
+const COLOR_DEFAULTS = {
+  dark: {
+    '--text':   '#d8eef8',
+    '--syn-h':  '#00d9ff',
+    '--syn-s':  'rgba(0,200,255,0.28)',
+    '--syn-d':  '#ffb703',
+    '--syn-w':  '#ff6d00',
+    '--syn-l':  '#00b8a0',
+  },
+  light: {
+    '--text':   '#1a1a1a',
+    '--syn-h':  '#004488',
+    '--syn-s':  '#777777',
+    '--syn-d':  '#000000',
+    '--syn-w':  '#cc3300',
+    '--syn-l':  '#005544',
+  }
+};
+
+const COLOR_LABELS = {
+  '--text':  'Body text',
+  '--syn-h': 'Headers',
+  '--syn-s': 'Separators',
+  '--syn-d': 'Data / Depth',
+  '--syn-w': 'Warnings',
+  '--syn-l': 'Labels',
+};
+
+// Load saved colours from localStorage
+function loadSavedColors() {
+  ['dark','light'].forEach(theme => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('tv_colors_' + theme) || '{}');
+      applyColorSet(theme, saved);
+    } catch {}
+  });
+}
+
+// Apply a colour set for a theme to the DOM
+function applyColorSet(theme, colors) {
+  const root = document.documentElement;
+  const defaults = COLOR_DEFAULTS[theme];
+  Object.keys(defaults).forEach(varName => {
+    const val = colors[varName] || defaults[varName];
+    // Only apply to live DOM when the theme is currently active
+    if (theme === 'dark'  && !isLightTheme) root.style.setProperty(varName, val);
+    if (theme === 'light' &&  isLightTheme) root.style.setProperty(varName, val);
+  });
+}
+
+// Re-apply the active theme's saved colours (called on theme switch)
+function applyActiveThemeColors() {
+  const theme = isLightTheme ? 'light' : 'dark';
+  try {
+    const saved = JSON.parse(localStorage.getItem('tv_colors_' + theme) || '{}');
+    applyColorSet(theme, saved);
+  } catch {}
+}
+
+// Save one colour change and apply it live
+function setColor(theme, varName, value) {
+  try {
+    const key = 'tv_colors_' + theme;
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    saved[varName] = value;
+    localStorage.setItem(key, JSON.stringify(saved));
+  } catch {}
+  // Apply live only if this theme is active
+  const active = isLightTheme ? 'light' : 'dark';
+  if (theme === active) document.documentElement.style.setProperty(varName, value);
+}
+
+// Reset theme colours to defaults
+function resetColors(theme) {
+  try { localStorage.removeItem('tv_colors_' + theme); } catch {}
+  const defaults = COLOR_DEFAULTS[theme];
+  const active = isLightTheme ? 'light' : 'dark';
+  if (theme === active) {
+    Object.entries(defaults).forEach(([k,v]) => document.documentElement.style.setProperty(k, v));
+  }
+  buildPickers(theme); // rebuild to show default values
+}
+
+// Build colour picker rows for a theme
+function buildPickers(theme) {
+  const container = document.getElementById('pickers-' + theme);
+  if (!container) return;
+  container.innerHTML = '';
+
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('tv_colors_' + theme) || '{}'); } catch {}
+
+  const defaults = COLOR_DEFAULTS[theme];
+  Object.entries(defaults).forEach(([varName, defaultVal]) => {
+    const current = saved[varName] || defaultVal;
+    // Convert rgba/named to hex for the color input (best-effort)
+    const hexVal = rgbaToHex(current);
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;';
+
+    row.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;flex:1;">
+        <div style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-hi);background:${hexVal};flex-shrink:0;" id="swatch-${theme}-${varName.replace(/[-]/g,'_')}"></div>
+        <div>
+          <div style="font-size:11px;color:var(--text);font-weight:600;">${COLOR_LABELS[varName]}</div>
+          <div style="font-size:9px;color:var(--muted);letter-spacing:.06em;">${varName}</div>
+        </div>
+      </div>
+      <input type="color" value="${hexVal}"
+        style="width:38px;height:32px;border:1px solid var(--border-hi);border-radius:6px;background:transparent;cursor:pointer;padding:2px;"
+        data-theme="${theme}" data-var="${varName}">
+    `;
+
+    const picker = row.querySelector('input[type=color]');
+    const swatch = row.querySelector('[id^="swatch-"]');
+
+    picker.addEventListener('input', () => {
+      swatch.style.background = picker.value;
+      setColor(theme, varName, picker.value);
+    });
+
+    container.appendChild(row);
+  });
+}
+
+// Convert rgba(...) or hex to #rrggbb for <input type=color>
+function rgbaToHex(color) {
+  if (/^#[0-9a-f]{6}$/i.test(color)) return color;
+  if (/^#[0-9a-f]{3}$/i.test(color)) {
+    const [,r,g,b] = color.match(/#(.)(.)(.)/).map((x,i) => i ? parseInt(x+x,16) : x);
+    return '#' + [r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+  }
+  // rgba / rgb — create a temporary canvas to resolve
+  try {
+    const c = document.createElement('canvas');
+    c.width = c.height = 1;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = color;
+    ctx.fillRect(0,0,1,1);
+    const [r,g,b] = ctx.getImageData(0,0,1,1).data;
+    return '#' + [r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+  } catch { return '#888888'; }
+}
+
+// Tab switching — modal tabs (About / Colors)
+function switchTab(tab) {
+  document.getElementById('tab-about').style.display    = tab === 'about'    ? '' : 'none';
+  document.getElementById('tab-settings').style.display = tab === 'settings' ? '' : 'none';
+  const aBtn = document.getElementById('tab-about-btn');
+  const sBtn = document.getElementById('tab-settings-btn');
+  if (tab === 'about') {
+    aBtn.style.background = 'var(--accent)'; aBtn.style.color = '#000'; aBtn.style.borderColor = 'var(--accent)';
+    sBtn.style.background = 'transparent';   sBtn.style.color = 'var(--muted)'; sBtn.style.borderColor = 'var(--border-hi)';
+  } else {
+    sBtn.style.background = 'var(--accent)'; sBtn.style.color = '#000'; sBtn.style.borderColor = 'var(--accent)';
+    aBtn.style.background = 'transparent';   aBtn.style.color = 'var(--muted)'; aBtn.style.borderColor = 'var(--border-hi)';
+    buildPickers('dark');
+    buildPickers('light');
+    // open on the currently active theme's sub-tab
+    switchSettingsTheme(isLightTheme ? 'light' : 'dark');
+  }
+}
+
+// Sub-tab switching inside Settings (dark / light)
+function switchSettingsTheme(theme) {
+  document.getElementById('spanel-dark').style.display  = theme === 'dark'  ? '' : 'none';
+  document.getElementById('spanel-light').style.display = theme === 'light' ? '' : 'none';
+  const dBtn = document.getElementById('stab-dark-btn');
+  const lBtn = document.getElementById('stab-light-btn');
+  if (theme === 'dark') {
+    dBtn.style.background = 'var(--accent)'; dBtn.style.color = '#000'; dBtn.style.borderColor = 'var(--accent)';
+    lBtn.style.background = 'transparent';   lBtn.style.color = 'var(--muted)'; lBtn.style.borderColor = 'var(--border-hi)';
+  } else {
+    lBtn.style.background = 'var(--accent)'; lBtn.style.color = '#000'; lBtn.style.borderColor = 'var(--accent)';
+    dBtn.style.background = 'transparent';   dBtn.style.color = 'var(--muted)'; dBtn.style.borderColor = 'var(--border-hi)';
+  }
+}
+
+// Load saved colours on startup
+loadSavedColors();
+
+// Re-apply saved colours whenever theme is toggled
+const _origApplyTheme = applyTheme;
+// Patch applyTheme to also re-apply colour overrides after switching
+const _patchedApplyTheme = function(light) {
+  _origApplyTheme(light);
+  setTimeout(applyActiveThemeColors, 0);
+};
+btnTheme.removeEventListener('click', btnTheme._themeHandler);
+btnTheme.addEventListener('click', () => {
+  isLightTheme = !isLightTheme;
+  _patchedApplyTheme(isLightTheme);
+});
 
 // ── Keyboard shortcuts ────────────────────────────────────
 document.addEventListener('keydown', e => {
