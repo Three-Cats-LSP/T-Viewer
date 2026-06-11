@@ -1,0 +1,12 @@
+{
+  "appId": "com.threecats.tviewer",
+  "appName": "T-Viewer",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "App": {},
+    "Share": {}
+  }
+}
