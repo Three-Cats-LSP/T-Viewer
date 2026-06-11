@@ -573,14 +573,9 @@ let toastTimer;
 // ── Theme ─────────────────────────────────────────────────
 function applyTheme(light) {
   document.body.classList.toggle('light-theme', light);
-  // clear any inline colour overrides from the previous theme
-  Object.keys(COLOR_DEFAULTS.dark).concat(Object.keys(COLOR_DEFAULTS.light))
-    .filter((v,i,a) => a.indexOf(v) === i)
-    .forEach(v => document.body.style.removeProperty(v));
   themeIcon.textContent = light ? '☀️' : '🌙';
   themeMeta.content = light ? '#f8f9fa' : '#030c18';
   try { localStorage.setItem('tv_theme', light ? 'light' : 'dark'); } catch {}
-  // re-apply saved colour overrides for the new theme
   setTimeout(applyActiveThemeColors, 0);
 }
 
@@ -900,6 +895,9 @@ function applyColorSet(theme, colors) {
 // Re-apply the active theme's saved colours (called on theme switch)
 function applyActiveThemeColors() {
   const theme = isLightTheme ? 'light' : 'dark';
+  // clear all inline var overrides first so previous theme doesn't bleed
+  const allVars = [...new Set([...Object.keys(COLOR_DEFAULTS.dark), ...Object.keys(COLOR_DEFAULTS.light)])];
+  allVars.forEach(v => document.body.style.removeProperty(v));
   try {
     const saved = JSON.parse(localStorage.getItem('tv_colors_' + theme) || '{}');
     applyColorSet(theme, saved);
