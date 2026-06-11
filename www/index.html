@@ -190,12 +190,13 @@
   .l { color: var(--syn-l); }
 
   /* ── LIGHT THEME: force readable dark text on white ── */
-  body.light-theme #content { color: #000000; }
-  body.light-theme #content .h { color: var(--syn-h); }
-  body.light-theme #content .s { color: #888888; }
-  body.light-theme #content .d { color: var(--syn-d); }
-  body.light-theme #content .w { color: var(--syn-w); }
-  body.light-theme #content .l { color: var(--syn-l); }
+  body.light-theme #content { color: #000000 !important; }
+  body.light-theme #content span { color: #000000 !important; }
+  body.light-theme #content .h { color: #004488 !important; font-weight: bold; }
+  body.light-theme #content .s { color: #777777 !important; }
+  body.light-theme #content .d { color: #7a4f00 !important; }
+  body.light-theme #content .w { color: #cc3300 !important; }
+  body.light-theme #content .l { color: #005544 !important; }
 
   /* ── EMPTY STATE ── */
   #empty {
