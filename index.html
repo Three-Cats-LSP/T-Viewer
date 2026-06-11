@@ -503,6 +503,12 @@
     <!-- ── SETTINGS TAB ── -->
     <div id="tab-settings" style="display:none;">
 
+      <!-- font selector -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tip);margin-bottom:10px;">Font</div>
+        <div id="font-options" style="display:flex;flex-direction:column;gap:7px;"></div>
+      </div>
+
       <!-- theme sub-tabs -->
       <div style="display:flex;gap:6px;margin-bottom:16px;">
         <button id="stab-dark-btn" onclick="switchSettingsTheme('dark')"
@@ -773,6 +779,68 @@ document.addEventListener('drop', e => {
   }
 })();
 
+// ── Font Settings ─────────────────────────────────────────
+
+const FONTS = [
+  { key: 'system',   label: 'System Default',  stack: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' },
+  { key: 'mono',     label: 'Monospace',        stack: '"Courier New", Courier, monospace' },
+  { key: 'roboto',   label: 'Roboto Mono',      stack: '"Roboto Mono", "Courier New", monospace' },
+  { key: 'source',   label: 'Source Code Pro',  stack: '"Source Code Pro", "Courier New", monospace' },
+  { key: 'jetbrains',label: 'JetBrains Mono',   stack: '"JetBrains Mono", "Courier New", monospace' },
+  { key: 'opensans', label: 'Open Sans',         stack: '"Open Sans", "Segoe UI", Roboto, sans-serif' },
+  { key: 'noto',     label: 'Noto Sans',         stack: '"Noto Sans", "Segoe UI", sans-serif' },
+];
+
+function applyFont(key) {
+  const font = FONTS.find(f => f.key === key) || FONTS[0];
+  document.getElementById('content').style.fontFamily = font.stack;
+  try { localStorage.setItem('tv_font', key); } catch {}
+  // update selected state in picker if it exists
+  document.querySelectorAll('.font-opt-btn').forEach(btn => {
+    const active = btn.dataset.key === key;
+    btn.style.borderColor  = active ? 'var(--accent)'    : 'var(--border-hi)';
+    btn.style.background   = active ? 'var(--accent)'    : 'var(--card)';
+    btn.style.color        = active ? '#000'             : 'var(--text)';
+  });
+}
+
+function buildFontPicker() {
+  const container = document.getElementById('font-options');
+  if (!container || container.children.length > 0) return; // only build once
+  let saved = 'system';
+  try { saved = localStorage.getItem('tv_font') || 'system'; } catch {}
+
+  FONTS.forEach(font => {
+    const btn = document.createElement('button');
+    const active = font.key === saved;
+    btn.className = 'font-opt-btn';
+    btn.dataset.key = font.key;
+    btn.style.cssText = `
+      width:100%; padding:10px 14px;
+      border-radius:8px; cursor:pointer;
+      border:1px solid ${active ? 'var(--accent)' : 'var(--border-hi)'};
+      background:${active ? 'var(--accent)' : 'var(--card)'};
+      color:${active ? '#000' : 'var(--text)'};
+      text-align:left; font-size:13px;
+      font-family:${font.stack};
+      transition:border-color .15s, background .15s, color .15s;
+    `;
+    // show label in the font itself + a sample of dive-plan text
+    btn.innerHTML = `<span style="font-weight:600;">${font.label}</span>
+      <span style="font-size:11px;opacity:0.6;margin-left:8px;">40m · Deco: 3min</span>`;
+    btn.addEventListener('click', () => applyFont(font.key));
+    container.appendChild(btn);
+  });
+}
+
+// Apply saved font on startup
+(function initFont() {
+  try {
+    const saved = localStorage.getItem('tv_font') || 'system';
+    applyFont(saved);
+  } catch {}
+})();
+
 // ── Colour Settings ───────────────────────────────────────
 
 // Default colours per theme — mirrors the CSS
@@ -980,6 +1048,7 @@ function switchTab(tab) {
     aBtn.style.background = 'transparent';   aBtn.style.color = 'var(--muted)'; aBtn.style.borderColor = 'var(--border-hi)';
     buildPickers('dark');
     buildPickers('light');
+    buildFontPicker();
     // open on the currently active theme's sub-tab
     switchSettingsTheme(isLightTheme ? 'light' : 'dark');
   }
