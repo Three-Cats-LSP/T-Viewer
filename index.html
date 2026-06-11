@@ -44,12 +44,12 @@
     --gold:      #d4af37;
     --bar:       52px;
     --fs:        15px;
-    /* syntax — maps to LSP semantic colours */
-    --syn-h:   var(--accent);          /* headers     → cyan accent */
-    --syn-s:   var(--border-hi);       /* separators  → dim border */
-    --syn-d:   var(--yellow);          /* data/numbers→ amber */
-    --syn-w:   var(--orange);          /* warnings    → orange */
-    --syn-l:   var(--accent2);         /* labels      → teal */
+    /* syntax — direct hex so JS setProperty() can override them */
+    --syn-h:   #00d9ff;
+    --syn-s:   rgba(0,200,255,0.28);
+    --syn-d:   #ffb703;
+    --syn-w:   #ff6d00;
+    --syn-l:   #00b8a0;
   }
 
   /* ── LIGHT THEME — matches LSP D-Planner light mode exactly ── */
@@ -72,12 +72,12 @@
     --orange:    #ff5500;
     --red:       #FF3131;
     --gold:      #996600;
-    /* syntax — light mode: most things black, only separators stay grey */
-    --syn-h:   var(--accent);          /* section headers → blue */
-    --syn-s:   var(--dim);             /* separators      → grey */
-    --syn-d:   #000000;               /* data/numbers    → BLACK */
-    --syn-w:   var(--orange);          /* warnings        → orange-red */
-    --syn-l:   var(--accent2);         /* key:value lines → dark teal (unchanged) */
+    /* syntax — direct hex so JS setProperty() can override them */
+    --syn-h:   #004488;
+    --syn-s:   #cccccc;
+    --syn-d:   #000000;
+    --syn-w:   #cc3300;
+    --syn-l:   #005544;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -190,16 +190,12 @@
   .l { color: var(--syn-l); }
 
   /* ── LIGHT THEME: hardcoded dark colors — no var() ── */
-  body.light-theme #content .d { color: #000000 !important; }
-  body.light-theme #content .h { color: #004488 !important; font-weight: bold; }
-  body.light-theme #content .s { color: #777777 !important; }
-  body.light-theme #content .w { color: #cc3300 !important; }
-  /* keep UI elements using their accent colors */
-  body.light-theme #logo { color: #0055aa !important; }
-  body.light-theme .btn { color: #1a1a1a !important; }
-  body.light-theme #btn-theme { color: #0055aa !important; border-color: #0055aa !important; }
-  body.light-theme #filename { color: #555555 !important; }
-  body.light-theme #zoom-label { color: #555555 !important; }
+  /* light theme UI element colours */
+  body.light-theme #logo { color: #0055aa; }
+  body.light-theme .btn { color: #1a1a1a; }
+  body.light-theme #btn-theme { color: #0055aa; border-color: #0055aa; }
+  body.light-theme #filename { color: #555555; }
+  body.light-theme #zoom-label { color: #555555; }
 
   /* ── EMPTY STATE ── */
   #empty {
