@@ -42,7 +42,7 @@
     --orange:    #ff6d00;
     --red:       #ff4757;
     --gold:      #d4af37;
-    --bar:       52px;
+    --bar:       44px;
     --fs:        15px;
     /* syntax — direct hex so JS setProperty() can override them */
     --syn-h:   #00d9ff;
@@ -339,6 +339,12 @@
   <button class="btn hidden" id="btn-copy" title="Copy all">
     <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
   </button>
+  <button class="btn hidden" id="btn-edit" title="Edit">
+    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+  </button>
+  <button class="btn hidden" id="btn-save" title="Save file" style="color:var(--accent);">
+    <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+  </button>
   <!-- Info / Ref toggle -->
   <button class="btn" id="btn-ref" title="About / Reference" style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;">?</button>
   <!-- Day/Night toggle -->
@@ -554,6 +560,8 @@ const fname     = document.getElementById('filename');
 const btnOpen   = document.getElementById('btn-open');
 const btnShare  = document.getElementById('btn-share');
 const btnCopy   = document.getElementById('btn-copy');
+const btnEdit   = document.getElementById('btn-edit');
+const btnSave   = document.getElementById('btn-save');
 const btnTheme  = document.getElementById('btn-theme');
 const btnRef    = document.getElementById('btn-ref');
 const themeIcon = document.getElementById('theme-icon');
@@ -659,6 +667,7 @@ function loadText(text, name) {
   fname.textContent = name || 'file';
   btnShare.classList.remove('hidden');
   btnCopy.classList.remove('hidden');
+  btnEdit.classList.remove('hidden');
   scroll.scrollTop = 0;
 }
 
@@ -735,6 +744,75 @@ function copyAll() {
     });
 }
 btnCopy.addEventListener('click', copyAll);
+
+// ── Edit mode ─────────────────────────────────────────────
+let isEditing = false;
+
+btnEdit.addEventListener('click', () => {
+  isEditing = !isEditing;
+  if (isEditing) {
+    // switch to plain text editing
+    content.setAttribute('contenteditable', 'plaintext-only');
+    content.style.outline = 'none';
+    content.style.caretColor = 'var(--accent)';
+    // show raw text (remove highlight spans so editing isn't mangled)
+    content.innerText = currentText;
+    btnEdit.style.color  = 'var(--accent)';
+    btnEdit.style.borderColor = 'var(--accent)';
+    btnSave.classList.remove('hidden');
+    toast('Edit mode — tap 💾 to save');
+  } else {
+    // exit edit — re-highlight and update currentText
+    currentText = content.innerText;
+    content.removeAttribute('contenteditable');
+    content.innerHTML = highlight(currentText);
+    btnEdit.style.color = '';
+    btnEdit.style.borderColor = '';
+    btnSave.classList.add('hidden');
+  }
+});
+
+// ── Save file ─────────────────────────────────────────────
+btnSave.addEventListener('click', () => {
+  if (isEditing) {
+    // commit edits first
+    currentText = content.innerText;
+    content.removeAttribute('contenteditable');
+    content.innerHTML = highlight(currentText);
+    isEditing = false;
+    btnEdit.style.color = '';
+    btnEdit.style.borderColor = '';
+    btnSave.classList.add('hidden');
+  }
+  // Save via Capacitor Filesystem if available, else browser download
+  const Filesystem = cap('Filesystem');
+  if (Filesystem) {
+    Filesystem.writeFile({
+      path: fname.textContent,
+      data: currentText,
+      directory: 'DOCUMENTS',
+      encoding: 'utf8',
+      recursive: true
+    }).then(() => toast('Saved ✓'))
+      .catch(() => saveAsBrowserDownload());
+  } else {
+    saveAsBrowserDownload();
+  }
+});
+
+function saveAsBrowserDownload() {
+  const blob = new Blob([currentText], { type: 'text/plain;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {
+    href: url,
+    download: fname.textContent || 'dive-plan.txt'
+  });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Downloaded ✓');
+}
 
 // ── Drag and drop (web / desktop) ──────────────────────────
 const dropzone = document.getElementById('dropzone');
