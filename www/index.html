@@ -4,26 +4,46 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0a1628">
+<meta name="theme-color" content="#0a1628" id="theme-meta">
 <title>T-Viewer</title>
-
-<!-- Capacitor runtime — injected by Capacitor build, no-op in browser -->
 <script>
-  // Stub so the app doesn't crash if run in a browser without Capacitor
   window.__capacitorBridgeReady = false;
 </script>
-
 <style>
+  /* ── DARK THEME (default) ── */
   :root {
-    --bg:       #0a1628;
-    --surface:  #0f2240;
-    --rim:      #1a3a60;
-    --accent:   #00c8e0;
-    --accent2:  #0090a8;
-    --text:     #d4eaf5;
-    --muted:    #6a9ab8;
-    --bar:      52px;
-    --fs:       15px;
+    --bg:      #0a1628;
+    --surface: #0f2240;
+    --rim:     #1a3a60;
+    --accent:  #00c8e0;
+    --accent2: #0090a8;
+    --text:    #d4eaf5;
+    --muted:   #6a9ab8;
+    --bar:     52px;
+    --fs:      15px;
+    /* syntax */
+    --syn-h:   #00c8e0;
+    --syn-s:   #1a3a60;
+    --syn-d:   #ffd080;
+    --syn-w:   #ff8c69;
+    --syn-l:   #7ecfe0;
+  }
+
+  /* ── DAY THEME ── */
+  body.day {
+    --bg:      #ffffff;
+    --surface: #f0f0f0;
+    --rim:     #bbbbbb;
+    --accent:  #006080;
+    --accent2: #004d66;
+    --text:    #0a0a0a;
+    --muted:   #444444;
+    /* syntax — darker for sunlight readability */
+    --syn-h:   #005a80;
+    --syn-s:   #aaaaaa;
+    --syn-d:   #7a5000;
+    --syn-w:   #b83000;
+    --syn-l:   #006655;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,9 +56,9 @@
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    /* Safe area for notched phones */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
+    transition: background .2s, color .2s;
   }
 
   /* ── TOP BAR ── */
@@ -54,6 +74,7 @@
     padding: 0 8px;
     gap: 6px;
     z-index: 100;
+    transition: background .2s, border-color .2s;
   }
 
   #logo {
@@ -76,7 +97,7 @@
     padding: 0 4px;
   }
 
-  /* ── ICON BUTTONS ── */
+  /* ── BUTTONS ── */
   .btn {
     display: flex; align-items: center; justify-content: center;
     width: 40px; height: 40px;
@@ -86,7 +107,7 @@
     color: var(--text);
     cursor: pointer;
     flex-shrink: 0;
-    transition: background .12s;
+    transition: background .12s, border-color .2s, color .2s;
     -webkit-user-select: none; user-select: none;
   }
   .btn:active { background: var(--rim); }
@@ -96,6 +117,9 @@
     stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
   }
   .btn.hidden { display: none; }
+
+  /* theme toggle — highlight when day mode is active */
+  body.day #btn-theme { border-color: var(--accent); color: var(--accent); }
 
   /* ── SCROLL AREA ── */
   #scroll {
@@ -121,14 +145,15 @@
     color: var(--text);
     min-height: 100%;
     tab-size: 4;
+    transition: color .2s;
   }
 
-  /* Dive-plan syntax colouring */
-  .h  { color: var(--accent); font-weight: bold; }   /* headers */
-  .s  { color: var(--rim); }                           /* separators */
-  .d  { color: #ffd080; }                              /* depth / pressure lines */
-  .w  { color: #ff8c69; }                              /* warnings */
-  .l  { color: #7ecfe0; }                              /* label: value */
+  /* syntax colours — use CSS vars so they flip with theme */
+  .h { color: var(--syn-h); font-weight: bold; }
+  .s { color: var(--syn-s); }
+  .d { color: var(--syn-d); }
+  .w { color: var(--syn-w); }
+  .l { color: var(--syn-l); }
 
   /* ── EMPTY STATE ── */
   #empty {
@@ -142,10 +167,10 @@
     text-align: center;
     padding: 32px;
   }
-  #empty svg { width: 60px; height: 60px; stroke: var(--accent2); fill: none; stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
-  #empty h2  { font-size: 16px; color: var(--accent); letter-spacing: .08em; }
-  #empty p   { font-size: 13px; line-height: 1.65; max-width: 260px; }
-  #empty small { font-size: 11px; color: var(--rim); }
+  #empty svg   { width: 60px; height: 60px; stroke: var(--accent2); fill: none; stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
+  #empty h2    { font-size: 16px; color: var(--accent); letter-spacing: .08em; }
+  #empty p     { font-size: 13px; line-height: 1.65; max-width: 260px; }
+  #empty small { font-size: 11px; color: var(--muted); }
 
   #open-big {
     background: var(--accent2);
@@ -175,6 +200,7 @@
     justify-content: center;
     gap: 10px;
     z-index: 100;
+    transition: background .2s, border-color .2s;
   }
 
   #zoom-label {
@@ -224,7 +250,6 @@
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* hidden web file input (fallback / dev) */
   #filein { display: none; }
 </style>
 </head>
@@ -237,16 +262,18 @@
   <span id="logo">T-VIEWER</span>
   <span id="filename">no file</span>
   <button class="btn" id="btn-open" title="Open file">
-    <!-- folder icon -->
     <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
   </button>
   <button class="btn hidden" id="btn-share" title="Share">
-    <!-- share icon -->
     <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
   </button>
   <button class="btn hidden" id="btn-copy" title="Copy all">
-    <!-- copy icon -->
     <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+  </button>
+  <!-- Day/Night toggle -->
+  <button class="btn" id="btn-theme" title="Day / Night">
+    <svg id="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+    <svg id="icon-sun"  viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
   </button>
 </div>
 
@@ -284,23 +311,6 @@
 <div id="toast"></div>
 
 <script type="module">
-// ── Capacitor plugins (loaded at runtime by Capacitor; stubs when not available) ──
-async function getPlugins() {
-  try {
-    const { Filesystem, Directory, Encoding } = await import(
-      // Capacitor injects this path in the WebView
-      'https://capacitorjs.com/capacitor/filesystem'
-    ).catch(() => ({ Filesystem: null }));
-    const { Share } = await import(
-      'https://capacitorjs.com/capacitor/share'
-    ).catch(() => ({ Share: null }));
-    return { Filesystem, Directory, Encoding, Share };
-  } catch {
-    return {};
-  }
-}
-
-// Safer: use window.Capacitor which is always available in the WebView
 function cap(plugin) {
   return window?.Capacitor?.Plugins?.[plugin] ?? null;
 }
@@ -312,6 +322,9 @@ const fname     = document.getElementById('filename');
 const btnOpen   = document.getElementById('btn-open');
 const btnShare  = document.getElementById('btn-share');
 const btnCopy   = document.getElementById('btn-copy');
+const btnTheme  = document.getElementById('btn-theme');
+const iconMoon  = document.getElementById('icon-moon');
+const iconSun   = document.getElementById('icon-sun');
 const btnLg     = document.getElementById('btn-lg');
 const btnSm     = document.getElementById('btn-sm');
 const zoomSlide = document.getElementById('zoom');
@@ -320,10 +333,28 @@ const openBig   = document.getElementById('open-big');
 const filein    = document.getElementById('filein');
 const toastEl   = document.getElementById('toast');
 const empty     = document.getElementById('empty');
+const themeMeta = document.getElementById('theme-meta');
 
 let currentText = '';
-let currentPath = '';   // native path for share
 let toastTimer;
+
+// ── Theme ─────────────────────────────────────────────────
+function applyTheme(day) {
+  document.body.classList.toggle('day', day);
+  iconMoon.style.display = day ? 'none'  : '';
+  iconSun.style.display  = day ? ''      : 'none';
+  themeMeta.content = day ? '#f0f0f0' : '#0a1628';
+  try { localStorage.setItem('tv_theme', day ? 'day' : 'night'); } catch {}
+}
+
+let isDayTheme = false;
+try { isDayTheme = localStorage.getItem('tv_theme') === 'day'; } catch {}
+applyTheme(isDayTheme);
+
+btnTheme.addEventListener('click', () => {
+  isDayTheme = !isDayTheme;
+  applyTheme(isDayTheme);
+});
 
 // ── Zoom ──────────────────────────────────────────────────
 function applyZoom(px) {
@@ -339,7 +370,7 @@ zoomSlide.addEventListener('input', () => applyZoom(+zoomSlide.value));
 btnLg.addEventListener('click', () => applyZoom(+zoomSlide.value + 1));
 btnSm.addEventListener('click', () => applyZoom(+zoomSlide.value - 1));
 
-// Pinch-to-zoom on the scroll area
+// Pinch-to-zoom
 let _pt0 = 0;
 scroll.addEventListener('touchstart', e => {
   if (e.touches.length === 2)
@@ -368,11 +399,11 @@ function toast(msg, ms = 2200) {
 function highlight(text) {
   return text.split('\n').map(line => {
     const e = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    if (/^[\s=\-─═*·.]{3,}$/.test(line.trim()))          return `<span class="s">${e}</span>`;
-    if (/^[A-Z0-9 _\-:]{4,}$/.test(line.trim()))          return `<span class="h">${e}</span>`;
+    if (/^[\s=\-─═*·.]{3,}$/.test(line.trim()))                   return `<span class="s">${e}</span>`;
+    if (/^[A-Z0-9 _\-:]{4,}$/.test(line.trim()))                   return `<span class="h">${e}</span>`;
     if (/\b\d+(\.\d+)?\s*(m|ft|bar|ata|psi|min|sec)\b/i.test(line)) return `<span class="d">${e}</span>`;
     if (/\b(warn|caution|alert|danger|deco|mandatory|stop)\b/i.test(line)) return `<span class="w">${e}</span>`;
-    if (/^[\w\s\/\(\)]{2,25}:\s+\S/.test(line))            return `<span class="l">${e}</span>`;
+    if (/^[\w\s\/\(\)]{2,25}:\s+\S/.test(line))                    return `<span class="l">${e}</span>`;
     return e;
   }).join('\n');
 }
@@ -388,26 +419,12 @@ function loadText(text, name) {
   scroll.scrollTop = 0;
 }
 
-// ── Open file — native picker via Capacitor ───────────────
-async function openFile() {
-  const Filesystem = cap('Filesystem');
-
-  if (Filesystem) {
-    // On Android, use the native file picker via intent
-    // Capacitor doesn't have a built-in FilePicker in v6 without an extra plugin.
-    // Best approach: trigger a hidden <input type=file> — Capacitor WebView passes
-    // it through to the Android native file picker correctly.
-    filein.click();
-  } else {
-    // Dev/browser fallback
-    filein.click();
-  }
-}
+// ── Open file ─────────────────────────────────────────────
+function openFile() { filein.click(); }
 
 filein.addEventListener('change', () => {
   const file = filein.files[0];
   if (!file) return;
-  currentPath = file.name;
   const reader = new FileReader();
   reader.onload = e => loadText(e.target.result, file.name);
   reader.onerror = () => toast('Could not read file ✗');
@@ -418,33 +435,25 @@ filein.addEventListener('change', () => {
 btnOpen.addEventListener('click', openFile);
 openBig.addEventListener('click', openFile);
 
-// ── Handle file opened FROM another app (intent) ──────────
-// When Android sends a file to T-Viewer via Share/Open-with,
-// Capacitor fires the 'appUrlOpen' event with the file URI.
+// ── Handle file intent from another app ───────────────────
 async function handleAppUrl(url) {
   if (!url) return;
   const Filesystem = cap('Filesystem');
   if (!Filesystem) return;
-
   try {
-    // url is a content:// or file:// URI
     const result = await Filesystem.readFile({ path: url, encoding: 'utf8' });
-    const name = url.split('/').pop().split('%2F').pop();
-    currentPath = url;
-    loadText(result.data, decodeURIComponent(name));
+    const name = decodeURIComponent(url.split('/').pop().split('%2F').pop());
+    loadText(result.data, name);
   } catch (err) {
     toast('Cannot open: ' + (err.message || err));
   }
 }
 
-// Capacitor fires this when another app opens T-Viewer with a file
 window.addEventListener('DOMContentLoaded', () => {
   if (window.Capacitor) {
-    // v6 way: listen via App plugin
     const App = cap('App');
     if (App) {
       App.addListener('appUrlOpen', data => handleAppUrl(data.url));
-      // Also check if the app was launched with a file
       App.getLaunchUrl().then(data => {
         if (data && data.url) handleAppUrl(data.url);
       }).catch(() => {});
@@ -458,21 +467,13 @@ btnShare.addEventListener('click', async () => {
   const Share = cap('Share');
   if (Share) {
     try {
-      await Share.share({
-        title: fname.textContent,
-        text: currentText,
-        dialogTitle: 'Share dive plan'
-      });
+      await Share.share({ title: fname.textContent, text: currentText, dialogTitle: 'Share dive plan' });
     } catch (e) {
       if (e.message !== 'Share canceled') toast('Share failed');
     }
   } else {
-    // Browser fallback
-    if (navigator.share) {
-      navigator.share({ title: fname.textContent, text: currentText }).catch(() => {});
-    } else {
-      copyAll();
-    }
+    if (navigator.share) navigator.share({ title: fname.textContent, text: currentText }).catch(() => {});
+    else copyAll();
   }
 });
 
@@ -492,12 +493,13 @@ function copyAll() {
 }
 btnCopy.addEventListener('click', copyAll);
 
-// ── Keyboard (desktop dev) ────────────────────────────────
+// ── Keyboard shortcuts ────────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.ctrlKey || e.metaKey) {
-    if (e.key === 'o') { e.preventDefault(); openFile(); }
+    if (e.key === 'o')             { e.preventDefault(); openFile(); }
     if (e.key === '=' || e.key === '+') { e.preventDefault(); applyZoom(+zoomSlide.value + 1); }
-    if (e.key === '-') { e.preventDefault(); applyZoom(+zoomSlide.value - 1); }
+    if (e.key === '-')             { e.preventDefault(); applyZoom(+zoomSlide.value - 1); }
+    if (e.key === 'd')             { e.preventDefault(); isDayTheme = !isDayTheme; applyTheme(isDayTheme); }
   }
 });
 </script>
