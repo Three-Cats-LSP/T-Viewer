@@ -574,6 +574,8 @@ function applyTheme(light) {
   themeIcon.textContent = light ? '☀️' : '🌙';
   themeMeta.content = light ? '#f8f9fa' : '#030c18';
   try { localStorage.setItem('tv_theme', light ? 'light' : 'dark'); } catch {}
+  // re-apply saved colour overrides for the new theme
+  setTimeout(applyActiveThemeColors, 0);
 }
 
 let isLightTheme = false;
@@ -957,17 +959,7 @@ function switchSettingsTheme(theme) {
 loadSavedColors();
 
 // Re-apply saved colours whenever theme is toggled
-const _origApplyTheme = applyTheme;
-// Patch applyTheme to also re-apply colour overrides after switching
-const _patchedApplyTheme = function(light) {
-  _origApplyTheme(light);
-  setTimeout(applyActiveThemeColors, 0);
-};
-btnTheme.removeEventListener('click', btnTheme._themeHandler);
-btnTheme.addEventListener('click', () => {
-  isLightTheme = !isLightTheme;
-  _patchedApplyTheme(isLightTheme);
-});
+
 
 // ── Keyboard shortcuts ────────────────────────────────────
 document.addEventListener('keydown', e => {
