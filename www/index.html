@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a1628">
+<title>T-Viewer</title>
+
+<!-- Capacitor runtime — injected by Capacitor build, no-op in browser -->
+<script>
+  // Stub so the app doesn't crash if run in a browser without Capacitor
+  window.__capacitorBridgeReady = false;
+</script>
+
+<style>
+  :root {
+    --bg:       #0a1628;
+    --surface:  #0f2240;
+    --rim:      #1a3a60;
+    --accent:   #00c8e0;
+    --accent2:  #0090a8;
+    --text:     #d4eaf5;
+    --muted:    #6a9ab8;
+    --bar:      52px;
+    --fs:       15px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Courier New', Courier, monospace;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    /* Safe area for notched phones */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ── TOP BAR ── */
+  #topbar {
+    position: fixed;
+    top: env(safe-area-inset-top, 0);
+    left: 0; right: 0;
+    height: var(--bar);
+    background: var(--surface);
+    border-bottom: 1px solid var(--rim);
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 6px;
+    z-index: 100;
+  }
+
+  #logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: var(--accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  #filename {
+    flex: 1;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    padding: 0 4px;
+  }
+
+  /* ── ICON BUTTONS ── */
+  .btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--rim);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .12s;
+    -webkit-user-select: none; user-select: none;
+  }
+  .btn:active { background: var(--rim); }
+  .btn svg {
+    width: 20px; height: 20px;
+    fill: none; stroke: currentColor;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .btn.hidden { display: none; }
+
+  /* ── SCROLL AREA ── */
+  #scroll {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + var(--bar));
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--bar));
+    left: 0; right: 0;
+    overflow-y: auto;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  #scroll::-webkit-scrollbar { width: 3px; height: 3px; }
+  #scroll::-webkit-scrollbar-thumb { background: var(--rim); border-radius: 2px; }
+
+  /* ── TEXT CONTENT ── */
+  #content {
+    padding: 14px 16px;
+    font-size: var(--fs);
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text);
+    min-height: 100%;
+    tab-size: 4;
+  }
+
+  /* Dive-plan syntax colouring */
+  .h  { color: var(--accent); font-weight: bold; }   /* headers */
+  .s  { color: var(--rim); }                           /* separators */
+  .d  { color: #ffd080; }                              /* depth / pressure lines */
+  .w  { color: #ff8c69; }                              /* warnings */
+  .l  { color: #7ecfe0; }                              /* label: value */
+
+  /* ── EMPTY STATE ── */
+  #empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 18px;
+    color: var(--muted);
+    text-align: center;
+    padding: 32px;
+  }
+  #empty svg { width: 60px; height: 60px; stroke: var(--accent2); fill: none; stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
+  #empty h2  { font-size: 16px; color: var(--accent); letter-spacing: .08em; }
+  #empty p   { font-size: 13px; line-height: 1.65; max-width: 260px; }
+  #empty small { font-size: 11px; color: var(--rim); }
+
+  #open-big {
+    background: var(--accent2);
+    border: none;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    padding: 13px 32px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .12s;
+  }
+  #open-big:active { background: var(--accent); }
+
+  /* ── BOTTOM BAR ── */
+  #bottombar {
+    position: fixed;
+    bottom: env(safe-area-inset-bottom, 0);
+    left: 0; right: 0;
+    height: var(--bar);
+    background: var(--surface);
+    border-top: 1px solid var(--rim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    z-index: 100;
+  }
+
+  #zoom-label {
+    font-size: 12px;
+    color: var(--muted);
+    width: 40px;
+    text-align: center;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 110px; height: 4px;
+    border-radius: 2px;
+    background: var(--rim);
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none; cursor: pointer;
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--bar) + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(16px);
+    background: var(--accent2);
+    color: #fff;
+    font-size: 13px;
+    padding: 8px 20px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity .22s, transform .22s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 300;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* hidden web file input (fallback / dev) */
+  #filein { display: none; }
+</style>
+</head>
+<body>
+
+<input type="file" id="filein" accept=".txt,.log,.plan,.div,text/*">
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <span id="logo">T-VIEWER</span>
+  <span id="filename">no file</span>
+  <button class="btn" id="btn-open" title="Open file">
+    <!-- folder icon -->
+    <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+  </button>
+  <button class="btn hidden" id="btn-share" title="Share">
+    <!-- share icon -->
+    <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+  </button>
+  <button class="btn hidden" id="btn-copy" title="Copy all">
+    <!-- copy icon -->
+    <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+  </button>
+</div>
+
+<!-- CONTENT -->
+<div id="scroll">
+  <div id="content">
+    <div id="empty">
+      <svg viewBox="0 0 64 64">
+        <path d="M12 8h28l12 12v36H12z"/>
+        <polyline points="40,8 40,20 52,20"/>
+        <line x1="20" y1="32" x2="44" y2="32"/>
+        <line x1="20" y1="40" x2="44" y2="40"/>
+        <line x1="20" y1="48" x2="36" y2="48"/>
+      </svg>
+      <h2>T-VIEWER</h2>
+      <p>Open a text file — or share one from LSP D-Planner directly into this app.</p>
+      <button id="open-big">OPEN FILE</button>
+      <small>UTF-8 · Unicode · plain text</small>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div id="bottombar">
+  <button class="btn" id="btn-sm" title="Smaller">
+    <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <input type="range" id="zoom" min="10" max="32" value="15" step="1">
+  <button class="btn" id="btn-lg" title="Bigger">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <span id="zoom-label">15px</span>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+// ── Capacitor plugins (loaded at runtime by Capacitor; stubs when not available) ──
+async function getPlugins() {
+  try {
+    const { Filesystem, Directory, Encoding } = await import(
+      // Capacitor injects this path in the WebView
+      'https://capacitorjs.com/capacitor/filesystem'
+    ).catch(() => ({ Filesystem: null }));
+    const { Share } = await import(
+      'https://capacitorjs.com/capacitor/share'
+    ).catch(() => ({ Share: null }));
+    return { Filesystem, Directory, Encoding, Share };
+  } catch {
+    return {};
+  }
+}
+
+// Safer: use window.Capacitor which is always available in the WebView
+function cap(plugin) {
+  return window?.Capacitor?.Plugins?.[plugin] ?? null;
+}
+
+// ── DOM refs ──
+const content   = document.getElementById('content');
+const scroll    = document.getElementById('scroll');
+const fname     = document.getElementById('filename');
+const btnOpen   = document.getElementById('btn-open');
+const btnShare  = document.getElementById('btn-share');
+const btnCopy   = document.getElementById('btn-copy');
+const btnLg     = document.getElementById('btn-lg');
+const btnSm     = document.getElementById('btn-sm');
+const zoomSlide = document.getElementById('zoom');
+const zoomLbl   = document.getElementById('zoom-label');
+const openBig   = document.getElementById('open-big');
+const filein    = document.getElementById('filein');
+const toastEl   = document.getElementById('toast');
+const empty     = document.getElementById('empty');
+
+let currentText = '';
+let currentPath = '';   // native path for share
+let toastTimer;
+
+// ── Zoom ──────────────────────────────────────────────────
+function applyZoom(px) {
+  px = Math.min(32, Math.max(10, Math.round(px)));
+  content.style.fontSize = px + 'px';
+  zoomLbl.textContent    = px + 'px';
+  zoomSlide.value        = px;
+  try { localStorage.setItem('tv_zoom', px); } catch {}
+}
+try { applyZoom(+localStorage.getItem('tv_zoom') || 15); } catch { applyZoom(15); }
+
+zoomSlide.addEventListener('input', () => applyZoom(+zoomSlide.value));
+btnLg.addEventListener('click', () => applyZoom(+zoomSlide.value + 1));
+btnSm.addEventListener('click', () => applyZoom(+zoomSlide.value - 1));
+
+// Pinch-to-zoom on the scroll area
+let _pt0 = 0;
+scroll.addEventListener('touchstart', e => {
+  if (e.touches.length === 2)
+    _pt0 = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                      e.touches[0].clientY - e.touches[1].clientY);
+}, { passive: true });
+scroll.addEventListener('touchmove', e => {
+  if (e.touches.length !== 2 || !_pt0) return;
+  e.preventDefault();
+  const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                       e.touches[0].clientY - e.touches[1].clientY);
+  applyZoom(+zoomSlide.value * d / _pt0);
+  _pt0 = d;
+}, { passive: false });
+scroll.addEventListener('touchend', () => { _pt0 = 0; });
+
+// ── Toast ─────────────────────────────────────────────────
+function toast(msg, ms = 2200) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
+}
+
+// ── Syntax highlight ──────────────────────────────────────
+function highlight(text) {
+  return text.split('\n').map(line => {
+    const e = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    if (/^[\s=\-─═*·.]{3,}$/.test(line.trim()))          return `<span class="s">${e}</span>`;
+    if (/^[A-Z0-9 _\-:]{4,}$/.test(line.trim()))          return `<span class="h">${e}</span>`;
+    if (/\b\d+(\.\d+)?\s*(m|ft|bar|ata|psi|min|sec)\b/i.test(line)) return `<span class="d">${e}</span>`;
+    if (/\b(warn|caution|alert|danger|deco|mandatory|stop)\b/i.test(line)) return `<span class="w">${e}</span>`;
+    if (/^[\w\s\/\(\)]{2,25}:\s+\S/.test(line))            return `<span class="l">${e}</span>`;
+    return e;
+  }).join('\n');
+}
+
+// ── Load text ─────────────────────────────────────────────
+function loadText(text, name) {
+  currentText = text;
+  empty.style.display = 'none';
+  content.innerHTML = highlight(text);
+  fname.textContent = name || 'file';
+  btnShare.classList.remove('hidden');
+  btnCopy.classList.remove('hidden');
+  scroll.scrollTop = 0;
+}
+
+// ── Open file — native picker via Capacitor ───────────────
+async function openFile() {
+  const Filesystem = cap('Filesystem');
+
+  if (Filesystem) {
+    // On Android, use the native file picker via intent
+    // Capacitor doesn't have a built-in FilePicker in v6 without an extra plugin.
+    // Best approach: trigger a hidden <input type=file> — Capacitor WebView passes
+    // it through to the Android native file picker correctly.
+    filein.click();
+  } else {
+    // Dev/browser fallback
+    filein.click();
+  }
+}
+
+filein.addEventListener('change', () => {
+  const file = filein.files[0];
+  if (!file) return;
+  currentPath = file.name;
+  const reader = new FileReader();
+  reader.onload = e => loadText(e.target.result, file.name);
+  reader.onerror = () => toast('Could not read file ✗');
+  reader.readAsText(file, 'UTF-8');
+  filein.value = '';
+});
+
+btnOpen.addEventListener('click', openFile);
+openBig.addEventListener('click', openFile);
+
+// ── Handle file opened FROM another app (intent) ──────────
+// When Android sends a file to T-Viewer via Share/Open-with,
+// Capacitor fires the 'appUrlOpen' event with the file URI.
+async function handleAppUrl(url) {
+  if (!url) return;
+  const Filesystem = cap('Filesystem');
+  if (!Filesystem) return;
+
+  try {
+    // url is a content:// or file:// URI
+    const result = await Filesystem.readFile({ path: url, encoding: 'utf8' });
+    const name = url.split('/').pop().split('%2F').pop();
+    currentPath = url;
+    loadText(result.data, decodeURIComponent(name));
+  } catch (err) {
+    toast('Cannot open: ' + (err.message || err));
+  }
+}
+
+// Capacitor fires this when another app opens T-Viewer with a file
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.Capacitor) {
+    // v6 way: listen via App plugin
+    const App = cap('App');
+    if (App) {
+      App.addListener('appUrlOpen', data => handleAppUrl(data.url));
+      // Also check if the app was launched with a file
+      App.getLaunchUrl().then(data => {
+        if (data && data.url) handleAppUrl(data.url);
+      }).catch(() => {});
+    }
+  }
+});
+
+// ── Share ─────────────────────────────────────────────────
+btnShare.addEventListener('click', async () => {
+  if (!currentText) return;
+  const Share = cap('Share');
+  if (Share) {
+    try {
+      await Share.share({
+        title: fname.textContent,
+        text: currentText,
+        dialogTitle: 'Share dive plan'
+      });
+    } catch (e) {
+      if (e.message !== 'Share canceled') toast('Share failed');
+    }
+  } else {
+    // Browser fallback
+    if (navigator.share) {
+      navigator.share({ title: fname.textContent, text: currentText }).catch(() => {});
+    } else {
+      copyAll();
+    }
+  }
+});
+
+// ── Copy ──────────────────────────────────────────────────
+function copyAll() {
+  if (!currentText) return;
+  navigator.clipboard?.writeText(currentText)
+    .then(() => toast('Copied ✓'))
+    .catch(() => {
+      const ta = Object.assign(document.createElement('textarea'),
+        { value: currentText, style: 'position:fixed;opacity:0' });
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      toast('Copied ✓');
+    });
+}
+btnCopy.addEventListener('click', copyAll);
+
+// ── Keyboard (desktop dev) ────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === 'o') { e.preventDefault(); openFile(); }
+    if (e.key === '=' || e.key === '+') { e.preventDefault(); applyZoom(+zoomSlide.value + 1); }
+    if (e.key === '-') { e.preventDefault(); applyZoom(+zoomSlide.value - 1); }
+  }
+});
+</script>
+</body>
+</html>

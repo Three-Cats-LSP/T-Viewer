@@ -1,12 +1,14 @@
 {
-  "appId": "com.threecats.tviewer",
+  "appId": "com.threecats.lsp.tviewer",
   "appName": "T-Viewer",
   "webDir": "www",
+  "android": {
+    "buildOptions": {
+      "keystorePath": null,
+      "keystoreAlias": null
+    }
+  },
   "server": {
     "androidScheme": "https"
-  },
-  "plugins": {
-    "App": {},
-    "Share": {}
   }
 }
