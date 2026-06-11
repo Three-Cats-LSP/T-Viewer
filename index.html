@@ -75,9 +75,9 @@
     /* syntax — light mode: most things black, only separators stay grey */
     --syn-h:   var(--accent);          /* section headers → blue */
     --syn-s:   var(--dim);             /* separators      → grey */
-    --syn-d:   #1a1a1a;               /* data/numbers    → BLACK (amber unreadable on white) */
+    --syn-d:   #000000;               /* data/numbers    → BLACK */
     --syn-w:   var(--orange);          /* warnings        → orange-red */
-    --syn-l:   var(--accent2);         /* key:value lines → dark teal (unchanged) */
+    --syn-l:   #000000;               /* key:value lines → BLACK */
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -194,6 +194,8 @@
   body.light-theme * { color: #1a1a1a; }
   body.light-theme #content,
   body.light-theme #content span { color: #000000 !important; }
+  body.light-theme #content .d { color: #000000 !important; }
+  body.light-theme #content .l { color: #000000 !important; }
   body.light-theme #content .h { color: #004488 !important; font-weight: bold; }
   body.light-theme #content .s { color: #777777 !important; }
   body.light-theme #content .d { color: #7a4f00 !important; }
