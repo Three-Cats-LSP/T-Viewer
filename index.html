@@ -677,16 +677,45 @@ window.addEventListener('DOMContentLoaded', () => {
 // ── Share ─────────────────────────────────────────────────
 btnShare.addEventListener('click', async () => {
   if (!currentText) return;
-  const Share = cap('Share');
-  if (Share) {
+  const Share      = cap('Share');
+  const Filesystem = cap('Filesystem');
+
+  if (Share && Filesystem) {
     try {
-      await Share.share({ title: fname.textContent, text: currentText, dialogTitle: 'Share dive plan' });
+      // write to a temp file in cache dir, then share it as an attachment
+      const filename = fname.textContent || 'dive-plan.txt';
+      await Filesystem.writeFile({
+        path: filename,
+        data: currentText,
+        directory: 'CACHE',
+        encoding: 'utf8',
+      });
+      const uriResult = await Filesystem.getUri({
+        path: filename,
+        directory: 'CACHE',
+      });
+      await Share.share({
+        title: filename,
+        files: [uriResult.uri],
+        dialogTitle: 'Share dive plan',
+      });
     } catch (e) {
       if (e.message !== 'Share canceled') toast('Share failed');
     }
+  } else if (navigator.share) {
+    // browser fallback — share as File object
+    try {
+      const file = new File([currentText], fname.textContent || 'dive-plan.txt', { type: 'text/plain' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: file.name });
+      } else {
+        await navigator.share({ title: fname.textContent, text: currentText });
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') copyAll();
+    }
   } else {
-    if (navigator.share) navigator.share({ title: fname.textContent, text: currentText }).catch(() => {});
-    else copyAll();
+    copyAll();
   }
 });
 
