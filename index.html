@@ -174,7 +174,6 @@
     padding: 14px 16px;
     font-size: var(--fs);
     line-height: 1.7;
-    white-space: pre;
     word-break: normal;
     color: var(--text);
     min-height: 100%;
@@ -298,6 +297,9 @@
   </button>
   <button class="btn hidden" id="btn-share" title="Share">
     <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+  </button>
+  <button class="btn" id="btn-wrap" title="Toggle word wrap">
+    <svg viewBox="0 0 24 24"><polyline points="17 10 21 10"/><path d="M3 10h11a4 4 0 0 1 0 8h-1"/><polyline points="10 14 7 18 10 22" transform="translate(0,-4)"/></svg>
   </button>
   <button class="btn" id="btn-ref" title="About / Reference" style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;">?</button>
   <!-- spacer pushes theme to right edge -->
@@ -528,6 +530,7 @@ const btnEdit   = document.getElementById('btn-edit');
 const btnSave   = document.getElementById('btn-save');
 const btnTheme  = document.getElementById('btn-theme');
 const btnRef    = document.getElementById('btn-ref');
+const btnWrap   = document.getElementById('btn-wrap');
 const themeIcon = document.getElementById('theme-icon');
 const zoomLbl   = document.getElementById('zoom-label');
 const openBig   = document.getElementById('open-big');
@@ -703,7 +706,20 @@ function copyAll() {
 }
 btnCopy.addEventListener('click', copyAll);
 
-// ── Edit mode ─────────────────────────────────────────────
+// ── Wrap toggle ───────────────────────────────────────────
+let isWrapped = true;
+try { isWrapped = localStorage.getItem('tv_wrap') !== 'off'; } catch {}
+
+function applyWrap(wrap) {
+  isWrapped = wrap;
+  content.style.whiteSpace = wrap ? 'pre-wrap' : 'pre';
+  btnWrap.style.color       = wrap ? 'var(--accent)' : '';
+  btnWrap.style.borderColor = wrap ? 'var(--accent)' : '';
+  try { localStorage.setItem('tv_wrap', wrap ? 'on' : 'off'); } catch {}
+}
+applyWrap(isWrapped);
+
+btnWrap.addEventListener('click', () => applyWrap(!isWrapped));
 let isEditing = false;
 let editOriginalText = ''; // snapshot of text when edit mode was entered
 
