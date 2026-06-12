@@ -273,7 +273,7 @@
 </head>
 <body>
 
-<input type="file" id="filein" accept=".txt,.log,.plan,.div,text/*">
+<input type="file" id="filein" accept=".txt,.log,.plan,.div,.pdf,text/*,application/pdf">
 
 <!-- DRAG-AND-DROP OVERLAY -->
 <div id="dropzone">
@@ -312,6 +312,9 @@
 
   <!-- hidden filename tracker -->
   <span id="filename" style="display:none;"></span>
+<!-- PDF.js -->
+<!-- PDF.js loaded inside main module script below -->
+
 <div id="scroll">
   <div id="content">
     <div id="empty">
@@ -323,11 +326,27 @@
         <line x1="20" y1="48" x2="36" y2="48"/>
       </svg>
       <h2>T-VIEWER</h2>
-      <p id="empty-hint">Open a text file — or share one from LSP D-Planner directly into this app.</p>
+      <p id="empty-hint">Open a text or PDF file — or share one from LSP D-Planner.</p>
       <button id="open-big">OPEN FILE</button>
-      <small id="empty-sub">UTF-8 · Unicode · plain text</small>
+      <small id="empty-sub">TXT · PDF · UTF-8 · Unicode</small>
     </div>
   </div>
+</div>
+
+<!-- PDF viewer (hidden until a PDF is opened) -->
+<div id="pdf-viewer" style="display:none;position:fixed;top:calc(env(safe-area-inset-top,0px) + var(--bar));bottom:0;left:0;right:0;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--bg);">
+  <div id="pdf-pages" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px;"></div>
+</div>
+
+<!-- PDF page nav bar (hidden until PDF opened) -->
+<div id="pdf-nav" style="display:none;position:fixed;bottom:env(safe-area-inset-bottom,0);left:0;right:0;height:36px;background:var(--surface);border-top:1px solid var(--rim);display:none;align-items:center;justify-content:center;gap:12px;z-index:100;">
+  <button class="btn" id="pdf-prev" style="width:30px;height:30px;">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <span id="pdf-page-label" style="font-size:12px;color:var(--muted);min-width:60px;text-align:center;"></span>
+  <button class="btn" id="pdf-next" style="width:30px;height:30px;">
+    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
 </div>
 
 <!-- BOTTOM BAR -->
@@ -540,6 +559,17 @@ const empty     = document.getElementById('empty');
 const themeMeta = document.getElementById('theme-meta');
 
 let currentText = '';
+
+// ── PDF state ─────────────────────────────────────────────
+let pdfDoc       = null;
+let pdfMode      = false;
+let pdfScale     = 1.5;
+const pdfViewer  = document.getElementById('pdf-viewer');
+const pdfPages   = document.getElementById('pdf-pages');
+const pdfNav     = document.getElementById('pdf-nav');
+const pdfPrev    = document.getElementById('pdf-prev');
+const pdfNext    = document.getElementById('pdf-next');
+const pdfLabel   = document.getElementById('pdf-page-label');
 let toastTimer;
 
 // ── Theme ─────────────────────────────────────────────────
@@ -633,15 +663,162 @@ function loadText(text, name) {
 }
 
 // ── Open file ─────────────────────────────────────────────
+// ── PDF mode ──────────────────────────────────────────────
+function enterPdfMode() {
+  pdfMode = true;
+  scroll.style.display     = 'none';
+  pdfViewer.style.display  = 'block';
+  pdfNav.style.display     = 'flex';
+  // hide text-only buttons, show share
+  btnCopy.classList.add('hidden');
+  btnEdit.classList.add('hidden');
+  btnSave.classList.add('hidden');
+  btnWrap.classList.add('hidden');
+  btnShare.classList.remove('hidden');
+}
+
+function exitPdfMode() {
+  pdfMode = false;
+  pdfDoc  = null;
+  pdfPages.innerHTML = '';
+  pdfViewer.style.display = 'none';
+  pdfNav.style.display    = 'none';
+}
+
+async function loadPdf(data, name) {
+  // data = ArrayBuffer or Uint8Array
+  fname.textContent = name || 'file.pdf';
+  enterPdfMode();
+
+  try {
+    // PDF.js is loaded as a module — access via window.pdfjsLib set below
+    const pdfjsLib = window.pdfjsLib;
+    if (!pdfjsLib) { toast('PDF.js not loaded yet — try again'); exitPdfMode(); return; }
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+
+    const loadingTask = pdfjsLib.getDocument({ data });
+    pdfDoc = await loadingTask.promise;
+
+    pdfLabel.textContent = `1 / ${pdfDoc.numPages}`;
+    pdfPages.innerHTML = '';
+
+    // render all pages as canvases
+    for (let i = 1; i <= pdfDoc.numPages; i++) {
+      await renderPage(i);
+    }
+
+    pdfViewer.scrollTop = 0;
+    pdfLabel.textContent = `1 / ${pdfDoc.numPages}`;
+
+  } catch (err) {
+    toast('Could not open PDF: ' + (err.message || err));
+    exitPdfMode();
+  }
+}
+
+async function renderPage(pageNum) {
+  const page     = await pdfDoc.getPage(pageNum);
+  const viewport = page.getViewport({ scale: pdfScale });
+
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = `position:relative;box-shadow:0 2px 8px rgba(0,0,0,0.4);`;
+  wrapper.dataset.page = pageNum;
+
+  const canvas  = document.createElement('canvas');
+  canvas.width  = viewport.width;
+  canvas.height = viewport.height;
+  canvas.style.display = 'block';
+  canvas.style.maxWidth = '100%';
+
+  wrapper.appendChild(canvas);
+  pdfPages.appendChild(wrapper);
+
+  const ctx = canvas.getContext('2d');
+  await page.render({ canvasContext: ctx, viewport }).promise;
+}
+
+// Update page label on scroll
+pdfViewer.addEventListener('scroll', () => {
+  if (!pdfDoc) return;
+  const wrappers = pdfPages.querySelectorAll('[data-page]');
+  const viewerTop = pdfViewer.getBoundingClientRect().top;
+  let current = 1;
+  wrappers.forEach(w => {
+    if (w.getBoundingClientRect().top - viewerTop < pdfViewer.clientHeight / 2) {
+      current = +w.dataset.page;
+    }
+  });
+  pdfLabel.textContent = `${current} / ${pdfDoc.numPages}`;
+});
+
+// Prev / Next scroll to page
+pdfPrev.addEventListener('click', () => {
+  if (!pdfDoc) return;
+  const wrappers = pdfPages.querySelectorAll('[data-page]');
+  const viewerTop = pdfViewer.getBoundingClientRect().top;
+  let current = 1;
+  wrappers.forEach(w => {
+    if (w.getBoundingClientRect().top - viewerTop < pdfViewer.clientHeight / 2) current = +w.dataset.page;
+  });
+  const target = pdfPages.querySelector(`[data-page="${Math.max(1, current - 1)}"]`);
+  if (target) target.scrollIntoView({ behavior: 'smooth' });
+});
+pdfNext.addEventListener('click', () => {
+  if (!pdfDoc) return;
+  const wrappers = pdfPages.querySelectorAll('[data-page]');
+  const viewerTop = pdfViewer.getBoundingClientRect().top;
+  let current = 1;
+  wrappers.forEach(w => {
+    if (w.getBoundingClientRect().top - viewerTop < pdfViewer.clientHeight / 2) current = +w.dataset.page;
+  });
+  const target = pdfPages.querySelector(`[data-page="${Math.min(pdfDoc.numPages, current + 1)}"]`);
+  if (target) target.scrollIntoView({ behavior: 'smooth' });
+});
+
+// Pinch zoom for PDF — re-render at new scale
+let _pdfPt0 = 0, _pdfBaseScale = 1.5;
+pdfViewer.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    _pdfPt0 = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                         e.touches[0].clientY - e.touches[1].clientY);
+    _pdfBaseScale = pdfScale;
+  }
+}, { passive: true });
+pdfViewer.addEventListener('touchmove', e => {
+  if (e.touches.length !== 2 || !_pdfPt0) return;
+  e.preventDefault();
+  const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                       e.touches[0].clientY - e.touches[1].clientY);
+  pdfScale = Math.min(4, Math.max(0.5, _pdfBaseScale * d / _pdfPt0));
+}, { passive: false });
+pdfViewer.addEventListener('touchend', async () => {
+  if (!pdfDoc || _pdfPt0 === 0) return;
+  _pdfPt0 = 0;
+  // re-render all pages at new scale
+  pdfPages.innerHTML = '';
+  for (let i = 1; i <= pdfDoc.numPages; i++) await renderPage(i);
+});
+
 function openFile() { filein.click(); }
 
 filein.addEventListener('change', () => {
   const file = filein.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => loadText(e.target.result, file.name);
-  reader.onerror = () => toast('Could not read file ✗');
-  reader.readAsText(file, 'UTF-8');
+  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    exitPdfMode(); // reset if switching from a previous PDF
+    const reader = new FileReader();
+    reader.onload = e => loadPdf(e.target.result, file.name);
+    reader.onerror = () => toast('Could not read PDF ✗');
+    reader.readAsArrayBuffer(file);
+  } else {
+    exitPdfMode();
+    const reader = new FileReader();
+    reader.onload = e => loadText(e.target.result, file.name);
+    reader.onerror = () => toast('Could not read file ✗');
+    reader.readAsText(file, 'UTF-8');
+  }
   filein.value = '';
 });
 
@@ -654,9 +831,20 @@ async function handleAppUrl(url) {
   const Filesystem = cap('Filesystem');
   if (!Filesystem) return;
   try {
-    const result = await Filesystem.readFile({ path: url, encoding: 'utf8' });
     const name = decodeURIComponent(url.split('/').pop().split('%2F').pop());
-    loadText(result.data, name);
+    if (url.toLowerCase().includes('.pdf') || name.toLowerCase().endsWith('.pdf')) {
+      exitPdfMode();
+      const result = await Filesystem.readFile({ path: url });
+      // result.data is base64 for binary files
+      const binary = atob(result.data);
+      const buf = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) buf[i] = binary.charCodeAt(i);
+      loadPdf(buf.buffer, name);
+    } else {
+      exitPdfMode();
+      const result = await Filesystem.readFile({ path: url, encoding: 'utf8' });
+      loadText(result.data, name);
+    }
   } catch (err) {
     toast('Cannot open: ' + (err.message || err));
   }
@@ -1182,6 +1370,18 @@ loadSavedColors();
 
 // Re-apply saved colours whenever theme is toggled
 
+
+// ── Load PDF.js dynamically ───────────────────────────────
+(async () => {
+  try {
+    const pdfjs = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+    window.pdfjsLib = pdfjs;
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+  } catch(e) {
+    console.warn('PDF.js failed to load:', e);
+  }
+})();
 
 // ── Keyboard shortcuts ────────────────────────────────────
 document.addEventListener('keydown', e => {
