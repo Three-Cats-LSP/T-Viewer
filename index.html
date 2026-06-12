@@ -704,10 +704,10 @@ async function loadPdf(data, name) {
     pdfLabel.textContent = `1 / ${pdfDoc.numPages}`;
     pdfPages.innerHTML = '';
 
-    // render all pages as canvases
-    for (let i = 1; i <= pdfDoc.numPages; i++) {
-      await renderPage(i);
-    }
+    // render all pages as canvases (parallel for speed)
+    const pageRenders = [];
+    for (let i = 1; i <= pdfDoc.numPages; i++) pageRenders.push(renderPage(i));
+    await Promise.all(pageRenders);
 
     pdfViewer.scrollTop = 0;
     pdfLabel.textContent = `1 / ${pdfDoc.numPages}`;
@@ -730,7 +730,8 @@ async function renderPage(pageNum) {
   canvas.width  = viewport.width;
   canvas.height = viewport.height;
   canvas.style.display = 'block';
-  canvas.style.maxWidth = '100%';
+  canvas.style.width  = viewport.width + 'px';
+  canvas.style.height = viewport.height + 'px';
 
   wrapper.appendChild(canvas);
   pdfPages.appendChild(wrapper);
@@ -814,9 +815,11 @@ pdfViewer.addEventListener('touchend', e => {
   pdfScale = _pdfFinalScale; // commit final scale
   clearTimeout(_pdfRenderTimer);
   _pdfRenderTimer = setTimeout(async () => {
-    pdfPages.style.transform = '';
     pdfPages.innerHTML = '';
-    for (let i = 1; i <= pdfDoc.numPages; i++) await renderPage(i);
+    pdfPages.style.transform = '';
+    const pages = [];
+    for (let i = 1; i <= pdfDoc.numPages; i++) pages.push(renderPage(i));
+    await Promise.all(pages);
   }, 150);
 }, { passive: true });
 
