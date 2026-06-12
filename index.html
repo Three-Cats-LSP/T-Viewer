@@ -335,7 +335,7 @@
 
 <!-- PDF viewer (hidden until a PDF is opened) -->
 <div id="pdf-viewer" style="display:none;position:fixed;top:calc(env(safe-area-inset-top,0px) + var(--bar));bottom:0;left:0;right:0;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--bg);">
-  <div id="pdf-pages" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px;"></div>
+  <div id="pdf-pages" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:8px;min-width:min-content;"></div>
 </div>
 
 <!-- PDF page nav bar (hidden until PDF opened) -->
