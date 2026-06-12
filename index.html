@@ -886,40 +886,55 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ── Share ─────────────────────────────────────────────────
 btnShare.addEventListener('click', async () => {
-  if (!currentText) return;
   const Share      = cap('Share');
   const Filesystem = cap('Filesystem');
+  const filename   = fname.textContent || 'file';
+
+  if (pdfMode) {
+    // ── Share PDF ──
+    if (!pdfDoc) return;
+    if (Share && Filesystem) {
+      try {
+        const uriResult = await Filesystem.getUri({ path: filename, directory: 'CACHE' });
+        await Share.share({ title: filename, files: [uriResult.uri], dialogTitle: 'Share PDF' });
+      } catch (e) {
+        // file might not be in cache if opened from intent — try writing it first
+        try {
+          // re-read original bytes and write to cache
+          toast('Preparing PDF…');
+          const result = await Filesystem.readFile({ path: filename });
+          await Filesystem.writeFile({ path: filename, data: result.data, directory: 'CACHE' });
+          const uri2 = await Filesystem.getUri({ path: filename, directory: 'CACHE' });
+          await Share.share({ title: filename, files: [uri2.uri], dialogTitle: 'Share PDF' });
+        } catch (e2) {
+          if (e2.message !== 'Share canceled') toast('Share failed');
+        }
+      }
+    } else {
+      toast('Share not available in browser');
+    }
+    return;
+  }
+
+  // ── Share text file ──
+  if (!currentText) return;
 
   if (Share && Filesystem) {
     try {
-      // write to a temp file in cache dir, then share it as an attachment
-      const filename = fname.textContent || 'dive-plan.txt';
-      await Filesystem.writeFile({
-        path: filename,
-        data: currentText,
-        directory: 'CACHE',
-        encoding: 'utf8',
-      });
-      const uriResult = await Filesystem.getUri({
-        path: filename,
-        directory: 'CACHE',
-      });
-      await Share.share({
-        title: filename,
-        files: [uriResult.uri],
-        dialogTitle: 'Share dive plan',
-      });
+      const txtName = filename.endsWith('.txt') ? filename : filename + '.txt';
+      await Filesystem.writeFile({ path: txtName, data: currentText, directory: 'CACHE', encoding: 'utf8' });
+      const uriResult = await Filesystem.getUri({ path: txtName, directory: 'CACHE' });
+      await Share.share({ title: txtName, files: [uriResult.uri], dialogTitle: 'Share dive plan' });
     } catch (e) {
       if (e.message !== 'Share canceled') toast('Share failed');
     }
   } else if (navigator.share) {
-    // browser fallback — share as File object
     try {
-      const file = new File([currentText], fname.textContent || 'dive-plan.txt', { type: 'text/plain' });
+      const file = new File([currentText], filename, { type: 'text/plain' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: file.name });
       } else {
-        await navigator.share({ title: fname.textContent, text: currentText });
+        await navigator.share({ title: filename, text: currentText });
       }
     } catch (e) {
       if (e.name !== 'AbortError') copyAll();
