@@ -900,6 +900,36 @@ window.addEventListener('DOMContentLoaded', () => {
       App.getLaunchUrl().then(data => {
         if (data && data.url) handleAppUrl(data.url);
       }).catch(() => {});
+
+      // Handle Android back gesture / back button
+      App.addListener('backButton', ({ canGoBack }) => {
+        if (pdfMode) {
+          // in PDF mode — go back to empty state
+          exitPdfMode();
+          scroll.style.display = '';
+          empty.style.display  = '';
+          content.innerHTML    = '';
+          content.appendChild(empty);
+          fname.textContent    = 'no file';
+          btnShare.classList.add('hidden');
+          btnCopy.classList.add('hidden');
+          btnEdit.classList.add('hidden');
+          btnWrap.classList.add('hidden');
+        } else if (currentText) {
+          // file is open — close it back to empty
+          currentText = '';
+          content.innerHTML = '';
+          empty.style.display = '';
+          content.appendChild(empty);
+          fname.textContent = 'no file';
+          btnShare.classList.add('hidden');
+          btnCopy.classList.add('hidden');
+          btnEdit.classList.add('hidden');
+        } else {
+          // nothing open — exit app
+          App.exitApp();
+        }
+      });
     }
   }
 });
