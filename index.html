@@ -778,28 +778,46 @@ pdfNext.addEventListener('click', () => {
 });
 
 // Pinch zoom for PDF — re-render at new scale
-let _pdfPt0 = 0, _pdfBaseScale = 1.5;
+let _pdfPt0 = 0, _pdfBaseScale = 1.5, _pdfPinching = false;
+
 pdfViewer.addEventListener('touchstart', e => {
   if (e.touches.length === 2) {
-    _pdfPt0 = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
-                         e.touches[0].clientY - e.touches[1].clientY);
+    _pdfPinching = true;
+    _pdfPt0 = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
     _pdfBaseScale = pdfScale;
+    e.preventDefault(); // must be non-passive to allow this
+  }
+}, { passive: false });
+
+pdfViewer.addEventListener('touchmove', e => {
+  if (!_pdfPinching || e.touches.length !== 2) return;
+  e.preventDefault();
+  const d = Math.hypot(
+    e.touches[0].clientX - e.touches[1].clientX,
+    e.touches[0].clientY - e.touches[1].clientY
+  );
+  const newScale = Math.min(4, Math.max(0.5, _pdfBaseScale * d / _pdfPt0));
+  // live feedback via CSS transform — fast, no re-render
+  pdfPages.style.transform = `scale(${newScale / _pdfBaseScale})`;
+  pdfPages.style.transformOrigin = 'top center';
+  pdfScale = newScale;
+}, { passive: false });
+
+pdfViewer.addEventListener('touchend', async e => {
+  if (!_pdfPinching) return;
+  if (e.touches.length < 2) {
+    _pdfPinching = false;
+    _pdfPt0 = 0;
+    if (!pdfDoc) return;
+    // reset CSS transform and re-render at new scale
+    pdfPages.style.transform = '';
+    pdfPages.innerHTML = '';
+    for (let i = 1; i <= pdfDoc.numPages; i++) await renderPage(i);
   }
 }, { passive: true });
-pdfViewer.addEventListener('touchmove', e => {
-  if (e.touches.length !== 2 || !_pdfPt0) return;
-  e.preventDefault();
-  const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
-                       e.touches[0].clientY - e.touches[1].clientY);
-  pdfScale = Math.min(4, Math.max(0.5, _pdfBaseScale * d / _pdfPt0));
-}, { passive: false });
-pdfViewer.addEventListener('touchend', async () => {
-  if (!pdfDoc || _pdfPt0 === 0) return;
-  _pdfPt0 = 0;
-  // re-render all pages at new scale
-  pdfPages.innerHTML = '';
-  for (let i = 1; i <= pdfDoc.numPages; i++) await renderPage(i);
-});
 
 function openFile() { filein.click(); }
 
