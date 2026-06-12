@@ -778,7 +778,7 @@ pdfNext.addEventListener('click', () => {
 });
 
 // Pinch zoom for PDF — re-render at new scale
-let _pdfPt0 = 0, _pdfBaseScale = 1.5, _pdfPinching = false;
+let _pdfPt0 = 0, _pdfBaseScale = 1.5, _pdfPinching = false, _pdfFinalScale = 1.5, _pdfRenderTimer = null;
 
 pdfViewer.addEventListener('touchstart', e => {
   if (e.touches.length === 2) {
@@ -788,7 +788,8 @@ pdfViewer.addEventListener('touchstart', e => {
       e.touches[0].clientY - e.touches[1].clientY
     );
     _pdfBaseScale = pdfScale;
-    e.preventDefault(); // must be non-passive to allow this
+    _pdfFinalScale = pdfScale;
+    e.preventDefault();
   }
 }, { passive: false });
 
@@ -799,24 +800,24 @@ pdfViewer.addEventListener('touchmove', e => {
     e.touches[0].clientX - e.touches[1].clientX,
     e.touches[0].clientY - e.touches[1].clientY
   );
-  const newScale = Math.min(4, Math.max(0.5, _pdfBaseScale * d / _pdfPt0));
-  // live feedback via CSS transform — fast, no re-render
-  pdfPages.style.transform = `scale(${newScale / _pdfBaseScale})`;
+  _pdfFinalScale = Math.min(4, Math.max(0.5, _pdfBaseScale * d / _pdfPt0));
+  pdfPages.style.transform = `scale(${_pdfFinalScale / _pdfBaseScale})`;
   pdfPages.style.transformOrigin = 'top center';
-  pdfScale = newScale;
 }, { passive: false });
 
-pdfViewer.addEventListener('touchend', async e => {
+pdfViewer.addEventListener('touchend', e => {
   if (!_pdfPinching) return;
-  if (e.touches.length < 2) {
-    _pdfPinching = false;
-    _pdfPt0 = 0;
-    if (!pdfDoc) return;
-    // reset CSS transform and re-render at new scale
+  if (e.touches.length > 0) return; // wait until ALL fingers are lifted
+  _pdfPinching = false;
+  _pdfPt0 = 0;
+  if (!pdfDoc) return;
+  pdfScale = _pdfFinalScale; // commit final scale
+  clearTimeout(_pdfRenderTimer);
+  _pdfRenderTimer = setTimeout(async () => {
     pdfPages.style.transform = '';
     pdfPages.innerHTML = '';
     for (let i = 1; i <= pdfDoc.numPages; i++) await renderPage(i);
-  }
+  }, 150);
 }, { passive: true });
 
 function openFile() { filein.click(); }
