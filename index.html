@@ -678,25 +678,46 @@ function enterPdfMode() {
 }
 
 function exitPdfMode() {
-  pdfMode = false;
-  pdfDoc  = null;
+  pdfMode     = false;
+  pdfDoc      = null;
+  pdfCacheUri = null;
   pdfPages.innerHTML = '';
   pdfViewer.style.display = 'none';
   pdfNav.style.display    = 'none';
 }
 
+let pdfCacheUri = null; // URI of PDF in cache dir, set when loaded
+
 async function loadPdf(data, name) {
   // data = ArrayBuffer or Uint8Array
   fname.textContent = name || 'file.pdf';
+  pdfCacheUri = null;
   enterPdfMode();
 
   try {
-    // PDF.js is loaded as a module — access via window.pdfjsLib set below
     const pdfjsLib = window.pdfjsLib;
     if (!pdfjsLib) { toast('PDF.js not loaded yet — try again'); exitPdfMode(); return; }
 
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+
+    // write PDF bytes to cache immediately so share works
+    const Filesystem = cap('Filesystem');
+    if (Filesystem) {
+      try {
+        const bytes = data instanceof ArrayBuffer ? new Uint8Array(data) : data;
+        // convert to base64
+        let binary = '';
+        bytes.forEach(b => binary += String.fromCharCode(b));
+        const b64 = btoa(binary);
+        const pdfName = fname.textContent;
+        await Filesystem.writeFile({ path: pdfName, data: b64, directory: 'CACHE' });
+        const uriResult = await Filesystem.getUri({ path: pdfName, directory: 'CACHE' });
+        pdfCacheUri = uriResult.uri;
+      } catch (e) {
+        console.warn('Could not cache PDF for sharing:', e);
+      }
+    }
 
     const loadingTask = pdfjsLib.getDocument({ data });
     pdfDoc = await loadingTask.promise;
@@ -704,7 +725,6 @@ async function loadPdf(data, name) {
     pdfLabel.textContent = `1 / ${pdfDoc.numPages}`;
     pdfPages.innerHTML = '';
 
-    // render all pages as canvases (parallel for speed)
     const pageRenders = [];
     for (let i = 1; i <= pdfDoc.numPages; i++) pageRenders.push(renderPage(i));
     await Promise.all(pageRenders);
@@ -895,20 +915,11 @@ btnShare.addEventListener('click', async () => {
     if (!pdfDoc) return;
     if (Share && Filesystem) {
       try {
-        const uriResult = await Filesystem.getUri({ path: filename, directory: 'CACHE' });
-        await Share.share({ title: filename, files: [uriResult.uri], dialogTitle: 'Share PDF' });
+        const uri = pdfCacheUri;
+        if (!uri) { toast('PDF not ready for sharing'); return; }
+        await Share.share({ title: filename, files: [uri], dialogTitle: 'Share PDF' });
       } catch (e) {
-        // file might not be in cache if opened from intent — try writing it first
-        try {
-          // re-read original bytes and write to cache
-          toast('Preparing PDF…');
-          const result = await Filesystem.readFile({ path: filename });
-          await Filesystem.writeFile({ path: filename, data: result.data, directory: 'CACHE' });
-          const uri2 = await Filesystem.getUri({ path: filename, directory: 'CACHE' });
-          await Share.share({ title: filename, files: [uri2.uri], dialogTitle: 'Share PDF' });
-        } catch (e2) {
-          if (e2.message !== 'Share canceled') toast('Share failed');
-        }
+        if (e.message !== 'Share canceled') toast('Share failed');
       }
     } else {
       toast('Share not available in browser');
