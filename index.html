@@ -90,15 +90,15 @@
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     transition: background .2s, color .2s;
   }
 
   /* ── TOP BAR ── */
   #topbar {
     position: fixed;
-    top: env(safe-area-inset-top, 0);
+    top: env(safe-area-inset-top, 0px);
     left: 0; right: 0;
     height: var(--bar);
     background: var(--surface);
@@ -334,7 +334,7 @@
 </div>
 
 <!-- PDF viewer (hidden until a PDF is opened) -->
-<div id="pdf-viewer" style="display:none;position:fixed;top:calc(env(safe-area-inset-top,0px) + var(--bar));bottom:0;left:0;right:0;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--bg);">
+<div id="pdf-viewer" style="display:none;position:fixed;top:calc(env(safe-area-inset-top,0px) + var(--bar));bottom:env(safe-area-inset-bottom,0px);left:0;right:0;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;background:var(--bg);">
   <div id="pdf-pages" style="display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:8px;min-width:min-content;"></div>
 </div>
 
@@ -677,6 +677,8 @@ function enterPdfMode() {
   btnShare.classList.remove('hidden');
 }
 
+let pdfCacheUri = null; // URI of PDF in cache dir, set when loaded
+
 function exitPdfMode() {
   pdfMode     = false;
   pdfDoc      = null;
@@ -685,8 +687,6 @@ function exitPdfMode() {
   pdfViewer.style.display = 'none';
   pdfNav.style.display    = 'none';
 }
-
-let pdfCacheUri = null; // URI of PDF in cache dir, set when loaded
 
 async function loadPdf(data, name) {
   // data = ArrayBuffer or Uint8Array
@@ -1121,10 +1121,19 @@ document.addEventListener('drop', e => {
   dropzone.classList.remove('active');
   const file = e.dataTransfer.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => loadText(ev.target.result, file.name);
-  reader.onerror = () => toast('Could not read file ✗');
-  reader.readAsText(file, 'UTF-8');
+  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    exitPdfMode();
+    const reader = new FileReader();
+    reader.onload = ev => loadPdf(ev.target.result, file.name);
+    reader.onerror = () => toast('Could not read PDF ✗');
+    reader.readAsArrayBuffer(file);
+  } else {
+    exitPdfMode();
+    const reader = new FileReader();
+    reader.onload = ev => loadText(ev.target.result, file.name);
+    reader.onerror = () => toast('Could not read file ✗');
+    reader.readAsText(file, 'UTF-8');
+  }
 });
 
 // ── Adjust empty-state hint for platform ─────────────────────
