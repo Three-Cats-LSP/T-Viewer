@@ -902,32 +902,28 @@ window.addEventListener('DOMContentLoaded', () => {
       }).catch(() => {});
 
       // Handle Android back gesture / back button
-      App.addListener('backButton', ({ canGoBack }) => {
-        if (pdfMode) {
-          // in PDF mode — go back to empty state
+      App.addListener('backButton', () => {
+        if (document.getElementById('refModal').style.display === 'flex') {
+          document.getElementById('refModal').style.display = 'none';
+        } else if (discardDialog.style.display === 'flex') {
+          discardDialog.style.display = 'none';
+        } else if (pdfMode) {
           exitPdfMode();
           scroll.style.display = '';
-          currentText = '';
-          content.innerHTML = '';
-          content.appendChild(empty);
-          empty.style.display = '';
-          fname.textContent = '';
           btnShare.classList.add('hidden');
-          btnCopy.classList.add('hidden');
-          btnEdit.classList.add('hidden');
           btnWrap.classList.add('hidden');
         } else if (currentText) {
-          // file is open — close it back to empty
           currentText = '';
           content.innerHTML = '';
           content.appendChild(empty);
           empty.style.display = '';
+          scroll.style.display = '';
           fname.textContent = '';
           btnShare.classList.add('hidden');
           btnCopy.classList.add('hidden');
           btnEdit.classList.add('hidden');
+          btnSave.classList.add('hidden');
         } else {
-          // nothing open — exit app
           App.exitApp();
         }
       });
