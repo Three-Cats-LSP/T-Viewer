@@ -339,7 +339,7 @@
 </div>
 
 <!-- PDF page nav bar (hidden until PDF opened) -->
-<div id="pdf-nav" style="display:none;position:fixed;bottom:env(safe-area-inset-bottom,0);left:0;right:0;height:36px;background:var(--surface);border-top:1px solid var(--rim);display:none;align-items:center;justify-content:center;gap:12px;z-index:100;">
+<div id="pdf-nav" style="display:none;position:fixed;bottom:env(safe-area-inset-bottom,0);left:0;right:0;height:36px;background:var(--surface);border-top:1px solid var(--rim);align-items:center;justify-content:center;gap:12px;z-index:100;">
   <button class="btn" id="pdf-prev" style="width:30px;height:30px;">
     <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
   </button>
@@ -353,7 +353,7 @@
 <div id="toast"></div>
 
 <!-- ── DISCARD WARNING DIALOG ── -->
-<div id="discardDialog" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:none;align-items:center;justify-content:center;padding:32px;">
+<div id="discardDialog" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;padding:32px;">
   <div style="max-width:320px;width:100%;background:var(--surface);border:1px solid var(--border-hi);border-radius:14px;padding:24px;font-family:'JetBrains Mono',monospace;text-align:center;">
     <div style="font-size:28px;margin-bottom:12px;">⚠️</div>
     <div style="font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:10px;">DISCARD CHANGES?</div>
@@ -408,7 +408,7 @@
           <li>Receive shared files from LSP D-Planner</li>
           <li>Syntax highlighting for deco logs</li>
           <li>Dark &amp; light theme (tap 🌙 / ☀️)</li>
-          <li>Pinch-to-zoom + font size slider</li>
+          <li>Pinch-to-zoom (font size shown in top bar)</li>
           <li>Copy &amp; share text</li>
           <li>Drag &amp; drop on desktop browser</li>
         </ul>
@@ -907,10 +907,11 @@ window.addEventListener('DOMContentLoaded', () => {
           // in PDF mode — go back to empty state
           exitPdfMode();
           scroll.style.display = '';
-          empty.style.display  = '';
-          content.innerHTML    = '';
+          currentText = '';
+          content.innerHTML = '';
           content.appendChild(empty);
-          fname.textContent    = 'no file';
+          empty.style.display = '';
+          fname.textContent = '';
           btnShare.classList.add('hidden');
           btnCopy.classList.add('hidden');
           btnEdit.classList.add('hidden');
@@ -919,9 +920,9 @@ window.addEventListener('DOMContentLoaded', () => {
           // file is open — close it back to empty
           currentText = '';
           content.innerHTML = '';
-          empty.style.display = '';
           content.appendChild(empty);
-          fname.textContent = 'no file';
+          empty.style.display = '';
+          fname.textContent = '';
           btnShare.classList.add('hidden');
           btnCopy.classList.add('hidden');
           btnEdit.classList.add('hidden');
