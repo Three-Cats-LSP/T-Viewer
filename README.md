@@ -4,7 +4,7 @@ A companion app for [LSP D-Planner](https://github.com/Three-Cats-LSP/LSP_D-plan
 
 Also runs as a web app in any browser — no install required.
 
-🌐 **Web App**: https://three-cats-lsp.github.io/T-Viewer/
+🌐 **Web App**: https://threecats-lsp.com/t-viewer/
 
 ---
 
@@ -12,9 +12,9 @@ Also runs as a web app in any browser — no install required.
 
 T-Viewer is available as a native Android app built with Capacitor by Ionic.
 
-📲 **[Download APK](https://three-cats-lsp.github.io/T-Viewer/download.html)**
+📲 **[Download APK](https://threecats-lsp.com/t-viewer/download.html)**
 
-> Direct download page: https://three-cats-lsp.github.io/T-Viewer/download.html
+> Direct download page: https://threecats-lsp.com/t-viewer/download.html
 
 **Installation:**
 1. Open the download page on your Android device
@@ -31,8 +31,8 @@ T-Viewer is designed to work alongside [LSP D-Planner](https://github.com/Three-
 
 Export a dive plan as TXT from LSP D-Planner and share it directly into T-Viewer on your Android device.
 
-- **LSP D-Planner Web App**: https://three-cats-lsp.github.io/LSP_D-planner/
-- **LSP D-Planner APK**: https://three-cats-lsp.github.io/LSP_D-planner/download.html
+- **LSP D-Planner Web App**: https://threecats-lsp.com/d-planner/
+- **LSP D-Planner APK**: https://threecats-lsp.com/d-planner/download.html
 
 ---
 
