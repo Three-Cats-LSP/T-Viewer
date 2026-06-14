@@ -16,9 +16,9 @@ Syntax highlighting for deco schedules. Dark & light theme. Pinch to zoom. Edit 
 
 Both apps are free and open source.
 
-🌐 LSP D-Planner: https://three-cats-lsp.github.io/LSP_D-planner/
-📲 LSP APK: https://three-cats-lsp.github.io/LSP_D-planner/download.html
-📲 T-Viewer APK: https://three-cats-lsp.github.io/T-Viewer/download.html
+🌐 LSP D-Planner: https://threecats-lsp.com/d-planner/
+📲 LSP APK: https://threecats-lsp.com/d-planner/download.html
+📲 T-Viewer APK: https://threecats-lsp.com/t-viewer/download.html
 
 #scubadiving #technicalDiving #techDiving #decoPlanning #diveplanning #Bühlmann #VPMB #trimix #android #openSource #freediving #divegear #divetech #underwaterphotography #threecatslsp
 
@@ -34,8 +34,8 @@ Two apps. One workflow.
 Free. Offline. Open source.
 Now with edge-to-edge Android UI and full light/dark theme support.
 
-🌐 https://three-cats-lsp.github.io/LSP_D-planner/
-📲 https://three-cats-lsp.github.io/T-Viewer/download.html
+🌐 https://threecats-lsp.com/d-planner/
+📲 https://threecats-lsp.com/t-viewer/download.html
 
 #techDiving #decoPlanning #scubadiving #diveplanning #android #openSource #threecatslsp
 
@@ -53,8 +53,8 @@ Export your plan as TXT, share it into **T-Viewer** on Android, and read your de
 
 Both apps on Android. Both open source.
 
-📲 LSP APK: https://three-cats-lsp.github.io/LSP_D-planner/download.html
-📲 T-Viewer APK: https://three-cats-lsp.github.io/T-Viewer/download.html
+📲 LSP APK: https://threecats-lsp.com/d-planner/download.html
+📲 T-Viewer APK: https://threecats-lsp.com/t-viewer/download.html
 💻 GitHub: https://github.com/Three-Cats-LSP
 
 #techDiving #technicalDiving #decoPlanning #Bühlmann #VPMB #trimix #scubadiving #diveplanning #android #openSource #threecatslsp
