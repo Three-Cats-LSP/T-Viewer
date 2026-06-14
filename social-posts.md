@@ -10,8 +10,8 @@ Open, view, and edit the text files exported by LSP D-Planner right on your Andr
 
 No ads. No tracking. Free.
 
-📲 Download: https://three-cats-lsp.github.io/T-Viewer/download.html
-🌐 Web version: https://three-cats-lsp.github.io/T-Viewer/
+📲 Download: https://threecats-lsp.com/t-viewer/download.html
+🌐 Web version: https://threecats-lsp.com/t-viewer/
 
 #diving #scubadiving #technicalDiving #decoPlanning #techDiving #diveplanning #android #openSource
 
@@ -25,7 +25,7 @@ Open your dive plan file, tap the edit button, and make changes directly on your
 
 Perfect for quick notes or adjustments after a dive.
 
-📲 https://three-cats-lsp.github.io/T-Viewer/download.html
+📲 https://threecats-lsp.com/t-viewer/download.html
 
 #diveplanning #techDiving #decoPlanning #android #scubadiving
 
@@ -39,7 +39,7 @@ Headers, depth data, gas labels, warnings — each class gets its own color in d
 
 Your dive plan, your colors.
 
-📲 https://three-cats-lsp.github.io/T-Viewer/download.html
+📲 https://threecats-lsp.com/t-viewer/download.html
 
 #techDiving #decoPlanning #scubadiving #diveplanning #android #openSource
 
@@ -53,9 +53,9 @@ Plan your technical dive on LSP D-Planner, export the deco schedule as a text fi
 
 Both apps are free and open source.
 
-🌐 LSP D-Planner: https://three-cats-lsp.github.io/LSP_D-planner/
-📲 T-Viewer APK: https://three-cats-lsp.github.io/T-Viewer/download.html
-📲 LSP APK: https://three-cats-lsp.github.io/LSP_D-planner/download.html
+🌐 LSP D-Planner: https://threecats-lsp.com/d-planner/
+📲 T-Viewer APK: https://threecats-lsp.com/t-viewer/download.html
+📲 LSP APK: https://threecats-lsp.com/d-planner/download.html
 
 #techDiving #decoPlanning #scubadiving #Bühlmann #VPMB #diveplanning #android
 
@@ -67,7 +67,7 @@ T-VIEWER
 Open your dive plan.
 Read it. Edit it. Share it.
 
-→ https://three-cats-lsp.github.io/T-Viewer/
+→ https://threecats-lsp.com/t-viewer/
 
 #scubadiving #techDiving #diveplanning
 
