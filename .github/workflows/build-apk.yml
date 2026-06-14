@@ -11,7 +11,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Skip commits made by this workflow itself (APK commit)
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
 
     steps:
@@ -70,3 +69,11 @@ jobs:
           git diff --cached --quiet && echo "No APK changes" && exit 0
           git commit -m "build: update T-Viewer.apk [skip ci]"
           git push
+
+      - name: Notify homepage to sync APK
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.SYNC_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/Three-Cats-LSP/threecats-lsp.com/dispatches \
+            -d '{"event_type":"sync-apk-t-viewer"}'
