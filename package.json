@@ -1,6 +1,6 @@
 {
   "name": "t-viewer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "T-Viewer — lightweight Unicode text reader for Android",
   "private": true,
   "scripts": {
