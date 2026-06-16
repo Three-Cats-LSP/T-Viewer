@@ -22,13 +22,23 @@ All apps live on the [Diver's Toolkit hub](https://threecats-lsp.com).
 
 ---
 
-## Android App
+## Web App
 
-T-Viewer is available as a native Android app built with Capacitor.
+Add T-Viewer to your home screen for quick access from Safari or Chrome.
+
+**Installation:**
+1. Open https://threecats-lsp.com/t-viewer/ on your phone, tablet, or computer
+2. **Safari (iPhone / iPad):** Tap **Share** (square with arrow) → **Add to Home Screen** → **Add**
+3. **Chrome (Android):** Tap **⋮** menu → **Install app** or **Add to Home screen** → confirm
+4. **Chrome (desktop):** Click the install icon in the address bar, or **⋮** → **Install T-Viewer**
+
+### Android APK
+
+T-Viewer is also available as a native Android app built with Capacitor.
 
 📲 **[Download APK](https://threecats-lsp.com/t-viewer/download.html)**
 
-**Installation:**
+**APK installation:**
 1. Open the download page on your Android device
 2. Tap **Download APK**
 3. Open the downloaded file from your Downloads folder
